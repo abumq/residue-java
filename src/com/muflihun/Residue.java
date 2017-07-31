@@ -44,12 +44,12 @@ import java.util.Random;
 import java.util.TimeZone;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.zip.DeflaterOutputStream;
 
 import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
-// import javax.xml.bind.DatatypeConverter;
 
 public class Residue {
 
@@ -106,6 +106,10 @@ public class Residue {
 
     public String getLastError() {
         return lastError;
+    }
+
+    public Boolean isConnected() {
+        return connected;
     }
 
     public void setAccessCodeMap(final Map<String, String> accessCodeMap) {
@@ -185,7 +189,7 @@ public class Residue {
 
     /**
      * Gets existing or new logger
-     * @see Residue#Logger
+     * @see Logger
      */
     public Logger getLogger(String id) {
         if (loggers.containsKey(id)) {
@@ -207,6 +211,8 @@ public class Residue {
         ResidueUtils.log("connect()");
         getInstance().host = host;
         getInstance().port = port;
+        getInstance().connecting = true;
+        getInstance().connected = false;
         final Map<String, String> accessCodeMap = getInstance().accessCodeMap;
         getInstance().tokens.clear();
 
@@ -222,7 +228,7 @@ public class Residue {
             public void handle(String data, boolean hasError) {
                 logForDebugging();
                 JsonObject j = new JsonObject();
-                //j.addProperty("_t", ResidueUtils.getTimestamp());
+                j.addProperty("_t", ResidueUtils.getTimestamp());
                 j.addProperty("type", ConnectType.CONNECT.getValue());
                 j.addProperty("key_size", 128);
                 if (getInstance().clientId != null
@@ -258,7 +264,12 @@ public class Residue {
                         try {
                             byte[] decoded = ResidueUtils.base64Decode(data);
                             String s2 = ResidueUtils.decryptRSA(decoded, getInstance().privateKey);
-                            s2 = s2.substring(s2.indexOf("{\"ack\"")); // FIXME: Fix this decryption! // TODO: FOR_ANDROID
+                            int pos = s2.indexOf("{\"ack\"");
+                            if (pos == -1) {
+                                ResidueUtils.log("Pos == -1");
+                                return;
+                            }
+                            s2 = s2.substring(pos); // FIXME: Fix this decryption! // TODO: FOR_ANDROID
                             ResidueUtils.log("Recv (RSA): " + s2); // TODO: FOR_ANDROID
                             JsonObject nonAckResponse = new Gson().fromJson(s2, JsonObject.class);
 
@@ -266,22 +277,17 @@ public class Residue {
                             getInstance().clientId = nonAckResponse.get("client_id").getAsString();
 
                             JsonObject j = new JsonObject();
-                            //j.addProperty("_t", ResidueUtils.getTimestamp());
+                            j.addProperty("_t", ResidueUtils.getTimestamp());
                             j.addProperty("type", ConnectType.ACKNOWLEGEMENT.getValue());
                             j.addProperty("client_id", getInstance().clientId);
                             String request = new Gson().toJson(j);
-                            ResidueUtils.log("Send (AES (plain)): " + request); // TODO: FOR_ANDROID
                             String r = ResidueUtils.encrypt(request, getInstance().key);
-                            ResidueUtils.log("Send (AES (Encrypted)): " + r); // TODO: FOR_ANDROID
-                            System.out.println("echo " + r.trim() + " | ripe -d --aes --base64 --key " + getInstance().key);
-                            System.out.println("echo " + request.trim() + " | ripe -e --aes --iv 5D7FDFC516BEB17D0BD46751C88E988F --key " + getInstance().key);
                             getInstance().connectionClient.send(r, new ResponseHandler("connectionClient.send-2") {
                                 @Override
                                 public void handle(String data, boolean hasError) {
                                     logForDebugging();
-                                    ResidueUtils.log("Recv (AES - encrypted): " + data);
+                                    getInstance().connecting = false;
                                     String finalConnectionStr = ResidueUtils.decrypt(data, getInstance().key);
-                                    ResidueUtils.log("Recv (AES): " + finalConnectionStr);
                                     JsonObject finalConnection = new Gson().fromJson(finalConnectionStr, JsonObject.class);
                                     if (finalConnection.get("status").getAsInt() == 0) {
                                         getInstance().age = finalConnection.get("age").getAsInt();
@@ -309,7 +315,6 @@ public class Residue {
                                                 }
                                             });
                                         } catch (IOException e) {
-                                            getInstance().connected = false;
                                             latch.countDown();
                                         }
                                         try {
@@ -321,12 +326,10 @@ public class Residue {
                                                 }
                                             });
                                         } catch (IOException e) {
-                                            getInstance().connected = false;
                                             latch.countDown();
                                         }
                                     } else {
                                         getInstance().lastError = finalConnection.get("error_text").getAsString();
-                                        getInstance().connected = false;
                                     }
                                     latch.countDown();
                                 }
@@ -417,7 +420,7 @@ public class Residue {
         AUTHORIZE_LOGGERS_WITH_NO_ACCESS_CODE(4),
         ALLOW_PLAIN_LOG_REQUEST(8),
         ALLOW_BULK_LOG_REQUEST(16),
-        COMPRESSION(512);
+        COMPRESSION(256);
 
         private Integer value;
 
@@ -466,6 +469,23 @@ public class Residue {
 
         private void read(final ResponseHandler responseHandler) {
             final ByteBuffer buf = ByteBuffer.allocate(4098);
+            /*socketChannel.read(buf, 10, TimeUnit.SECONDS, socketChannel, new CompletionHandler<Integer, AsynchronousSocketChannel>() {
+
+                @Override
+                public void completed(Integer result, AsynchronousSocketChannel channel) {
+                    try {
+                        responseHandler.handle(new String(buf.array(), "UTF-8"), false);
+                    } catch (UnsupportedEncodingException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                @Override
+                public void failed(Throwable exc, AsynchronousSocketChannel channel) {
+                    responseHandler.handle(exc.getMessage(), true);
+                }
+
+            });*/
             Future readResult = null;
             try {
                 readResult = socketChannel.read(buf);
@@ -576,7 +596,7 @@ public class Residue {
         private static KeyPair createNewKeyPair(Integer size) {
             try {
                 KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
-                SecureRandom random = SecureRandom.getInstance("SHA1PRNG");//, "SUN"); // TODO: Change for android
+                SecureRandom random = SecureRandom.getInstance("SHA1PRNG");//, "SUN"); // Android!
                 keyGen.initialize(size, random);
                 return keyGen.generateKeyPair();
             } catch (Exception e) {
@@ -661,20 +681,16 @@ public class Residue {
         }
 
         private static String base64Encode(byte[] bytes) {
-            //return DatatypeConverter.printBase64Binary(bytes);
             return Base64.encodeToString(bytes, Base64.DEFAULT);
         }
 
         private static byte[] base64Decode(String str) {
-            // return DatatypeConverter.parseBase64Binary(str);
             return Base64.decode(str.getBytes(), Base64.DEFAULT);
         }
 
         private final static char[] HEX_DIGITS = "0123456789ABCDEF".toCharArray();
 
         private static String hexEncode(byte[] bytes) {
-            //return DatatypeConverter.printHexBinary(bytes);
-
             int l = bytes.length;
 
             char[] out = new char[l << 1];
@@ -689,8 +705,6 @@ public class Residue {
         }
 
         private static byte[] hexDecode(String hex) throws RuntimeException {
-            //return DatatypeConverter.parseHexBinary(hex);
-
             char[] data = hex.toCharArray();
             int len = data.length;
 

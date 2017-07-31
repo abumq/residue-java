@@ -44,6 +44,7 @@ import java.util.Random;
 import java.util.TimeZone;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.zip.DeflaterOutputStream;
 
 import javax.crypto.Cipher;
@@ -210,6 +211,8 @@ public class Residue {
         ResidueUtils.log("connect()");
         getInstance().host = host;
         getInstance().port = port;
+        getInstance().connecting = true;
+        getInstance().connected = false;
         final Map<String, String> accessCodeMap = getInstance().accessCodeMap;
         getInstance().tokens.clear();
 
@@ -283,6 +286,7 @@ public class Residue {
                                 @Override
                                 public void handle(String data, boolean hasError) {
                                     logForDebugging();
+                                    getInstance().connecting = false;
                                     String finalConnectionStr = ResidueUtils.decrypt(data, getInstance().key);
                                     JsonObject finalConnection = new Gson().fromJson(finalConnectionStr, JsonObject.class);
                                     if (finalConnection.get("status").getAsInt() == 0) {
@@ -311,7 +315,6 @@ public class Residue {
                                                 }
                                             });
                                         } catch (IOException e) {
-                                            getInstance().connected = false;
                                             latch.countDown();
                                         }
                                         try {
@@ -323,12 +326,10 @@ public class Residue {
                                                 }
                                             });
                                         } catch (IOException e) {
-                                            getInstance().connected = false;
                                             latch.countDown();
                                         }
                                     } else {
                                         getInstance().lastError = finalConnection.get("error_text").getAsString();
-                                        getInstance().connected = false;
                                     }
                                     latch.countDown();
                                 }
@@ -468,6 +469,23 @@ public class Residue {
 
         private void read(final ResponseHandler responseHandler) {
             final ByteBuffer buf = ByteBuffer.allocate(4098);
+            /*socketChannel.read(buf, 10, TimeUnit.SECONDS, socketChannel, new CompletionHandler<Integer, AsynchronousSocketChannel>() {
+
+                @Override
+                public void completed(Integer result, AsynchronousSocketChannel channel) {
+                    try {
+                        responseHandler.handle(new String(buf.array(), "UTF-8"), false);
+                    } catch (UnsupportedEncodingException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                @Override
+                public void failed(Throwable exc, AsynchronousSocketChannel channel) {
+                    responseHandler.handle(exc.getMessage(), true);
+                }
+
+            });*/
             Future readResult = null;
             try {
                 readResult = socketChannel.read(buf);
