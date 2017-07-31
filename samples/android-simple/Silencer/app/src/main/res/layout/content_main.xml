@@ -8,40 +8,6 @@
     tools:context="com.muflihun.silencer.MainActivity"
     tools:showIn="@layout/activity_main">
 
-    <EditText
-        android:id="@+id/logMsg"
-        android:layout_width="333dp"
-        android:layout_height="47dp"
-        android:ems="10"
-        android:inputType="textPersonName"
-        android:text="This is message"
-        tools:layout_editor_absoluteX="16dp"
-        tools:layout_editor_absoluteY="102dp" />
-
-    <Button
-        android:id="@+id/logI"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Log(INFO)"
-        tools:layout_editor_absoluteX="49dp"
-        tools:layout_editor_absoluteY="173dp" />
-
-    <Button
-        android:id="@+id/logD"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="LOG(DEBUG)"
-        tools:layout_editor_absoluteX="-56dp"
-        tools:layout_editor_absoluteY="125dp" />
-
-    <Button
-        android:id="@+id/logV3"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="LOG(VERBOSE, 3)"
-        tools:layout_editor_absoluteX="124dp"
-        tools:layout_editor_absoluteY="250dp" />
-
     <GridLayout
         android:layout_width="0dp"
         android:layout_height="495dp"
@@ -70,12 +36,52 @@
 
         <Button
             android:id="@+id/btnReconnect"
-            android:layout_width="173dp"
+            android:layout_width="125dp"
             android:layout_height="48dp"
             android:layout_column="0"
-            android:layout_row="1"
+            android:layout_row="10"
             android:text="Reconnect()"
             tools:layout_editor_absoluteX="107dp"
             tools:layout_editor_absoluteY="410dp" />
+
+        <LinearLayout
+            android:layout_width="150dp"
+            android:layout_height="421dp"
+            android:orientation="vertical">
+
+            <EditText
+                android:id="@+id/logMsg"
+                android:layout_width="match_parent"
+                android:layout_height="47dp"
+                android:ems="10"
+                android:inputType="textPersonName"
+                android:text="This is message"
+                tools:layout_editor_absoluteX="16dp"
+                tools:layout_editor_absoluteY="102dp" />
+
+            <Button
+                android:id="@+id/logI"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Log(INFO)"
+                tools:layout_editor_absoluteX="49dp"
+                tools:layout_editor_absoluteY="173dp" />
+
+            <Button
+                android:id="@+id/logD"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="LOG(DEBUG)"
+                tools:layout_editor_absoluteX="-56dp"
+                tools:layout_editor_absoluteY="125dp" />
+
+            <Button
+                android:id="@+id/logV3"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="LOG(VERBOSE, 3)"
+                tools:layout_editor_absoluteX="124dp"
+                tools:layout_editor_absoluteY="250dp" />
+        </LinearLayout>
     </GridLayout>
 </android.support.constraint.ConstraintLayout>
