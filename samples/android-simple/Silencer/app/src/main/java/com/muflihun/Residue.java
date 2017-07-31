@@ -732,9 +732,9 @@ public class Residue {
                     accessCode = DEFAULT_ACCESS_CODE;
                 }
             }
-            if (accessCode == DEFAULT_ACCESS_CODE && !Flag.ALLOW_DEFAULT_ACCESS_CODE.isSet()) {
+            if (DEFAULT_ACCESS_CODE.equals(accessCode) && !Flag.ALLOW_DEFAULT_ACCESS_CODE.isSet()) {
                 throw new Exception("ERROR: Access code for logger [" + loggerId + "] not provided. Loggers without access code are not allowed by the server.");
-            } else if (accessCode == DEFAULT_ACCESS_CODE && Flag.ALLOW_DEFAULT_ACCESS_CODE.isSet() && !recursiveEmptyAccessCode) {
+            } else if (DEFAULT_ACCESS_CODE.equals(accessCode) && Flag.ALLOW_DEFAULT_ACCESS_CODE.isSet() && !recursiveEmptyAccessCode) {
                 // we don't need to get token, server will accept request
                 // without tokens
                 return;
@@ -886,7 +886,7 @@ public class Residue {
                         if (token == null) {
                             ResidueUtils.log("Failed to obtain token");
                         } else {
-                            if (!token.isEmpty()) { // token not requried
+                            if (!token.isEmpty()) { // empty token means token is not needed
                                 j.addProperty("token", token);
                             }
 

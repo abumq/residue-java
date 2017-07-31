@@ -70,10 +70,6 @@ public class MainActivity extends AppCompatActivity {
                 l.info("Info message");
                 l.debug("Debug message");
                 l.verbose("Verbose [3] message", 3);
-                final Residue.Logger l2 = r.getLogger("sample-app");
-                l2.info("Info message");
-                l2.debug("Debug message");
-                l2.verbose("Verbose [3] message", 3);
             }
         });
     }
