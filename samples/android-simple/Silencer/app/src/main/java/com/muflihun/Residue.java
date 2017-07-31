@@ -108,6 +108,10 @@ public class Residue {
         return lastError;
     }
 
+    public Boolean isConnected() {
+        return connected;
+    }
+
     public void setAccessCodeMap(final Map<String, String> accessCodeMap) {
         this.accessCodeMap = accessCodeMap;
     }
@@ -258,7 +262,12 @@ public class Residue {
                         try {
                             byte[] decoded = ResidueUtils.base64Decode(data);
                             String s2 = ResidueUtils.decryptRSA(decoded, getInstance().privateKey);
-                            s2 = s2.substring(s2.indexOf("{\"ack\"")); // FIXME: Fix this decryption! // TODO: FOR_ANDROID
+                            int pos = s2.indexOf("{\"ack\"");
+                            if (pos == -1) {
+                                ResidueUtils.log("Pos == -1");
+                                return;
+                            }
+                            s2 = s2.substring(pos); // FIXME: Fix this decryption! // TODO: FOR_ANDROID
                             ResidueUtils.log("Recv (RSA): " + s2); // TODO: FOR_ANDROID
                             JsonObject nonAckResponse = new Gson().fromJson(s2, JsonObject.class);
 

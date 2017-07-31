@@ -9,6 +9,7 @@ import android.support.v7.widget.Toolbar;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+
 import com.muflihun.Residue;
 
 import java.util.HashMap;
@@ -51,8 +52,15 @@ public class MainActivity extends AppCompatActivity {
 
                 Residue r = Residue.getInstance();
 
-                Snackbar.make(view, "Sending...", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+                if (r.isConnected()) {
+
+                    Snackbar.make(view, "Sending...", Snackbar.LENGTH_LONG)
+                            .setAction("Action", null).show();
+                } else {
+
+                    Snackbar.make(view, "Not connected!", Snackbar.LENGTH_LONG)
+                            .setAction("Action", null).show();
+                }
 
                 final Residue.Logger l = r.getLogger("default");
                 l.info("Info message");
@@ -75,7 +83,8 @@ public class MainActivity extends AppCompatActivity {
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
+        if (id == R.id.action_reconnect) {
+            new ResidueConnectTask().execute();
             return true;
         }
 
