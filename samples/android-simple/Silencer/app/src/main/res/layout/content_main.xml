@@ -8,13 +8,74 @@
     tools:context="com.muflihun.silencer.MainActivity"
     tools:showIn="@layout/activity_main">
 
-    <TextView
+    <EditText
+        android:id="@+id/logMsg"
+        android:layout_width="333dp"
+        android:layout_height="47dp"
+        android:ems="10"
+        android:inputType="textPersonName"
+        android:text="This is message"
+        tools:layout_editor_absoluteX="16dp"
+        tools:layout_editor_absoluteY="102dp" />
+
+    <Button
+        android:id="@+id/logI"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Hello World!"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        android:text="Log(INFO)"
+        tools:layout_editor_absoluteX="49dp"
+        tools:layout_editor_absoluteY="173dp" />
 
+    <Button
+        android:id="@+id/logD"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="LOG(DEBUG)"
+        tools:layout_editor_absoluteX="-56dp"
+        tools:layout_editor_absoluteY="125dp" />
+
+    <Button
+        android:id="@+id/logV3"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="LOG(VERBOSE, 3)"
+        tools:layout_editor_absoluteX="124dp"
+        tools:layout_editor_absoluteY="250dp" />
+
+    <GridLayout
+        android:layout_width="0dp"
+        android:layout_height="495dp"
+        tools:layout_editor_absoluteY="8dp"
+        tools:layout_editor_absoluteX="8dp">
+
+        <EditText
+            android:id="@+id/textHost"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:ems="10"
+            android:inputType="textPersonName"
+            android:text="192.168.1.103"
+            tools:layout_editor_absoluteX="16dp"
+            tools:layout_editor_absoluteY="346dp" />
+
+        <EditText
+            android:id="@+id/textPort"
+            android:layout_width="127dp"
+            android:layout_height="42dp"
+            android:ems="10"
+            android:inputType="numberSigned"
+            android:text="8777"
+            tools:layout_editor_absoluteX="240dp"
+            tools:layout_editor_absoluteY="346dp" />
+
+        <Button
+            android:id="@+id/btnReconnect"
+            android:layout_width="173dp"
+            android:layout_height="48dp"
+            android:layout_column="0"
+            android:layout_row="1"
+            android:text="Reconnect()"
+            tools:layout_editor_absoluteX="107dp"
+            tools:layout_editor_absoluteY="410dp" />
+    </GridLayout>
 </android.support.constraint.ConstraintLayout>

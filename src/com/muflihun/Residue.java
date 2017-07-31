@@ -199,6 +199,23 @@ public class Residue {
     }
 
     /**
+     * Sets host and port
+     */
+    public void setHost(final String host, final Integer port) {
+        this.host = host;
+        this.port = port;
+    }
+
+    /**
+     * Connects to previously set host and port
+     * @see #setHost(String, Integer)
+     * @see #connect(String, Integer)
+     */
+    public static boolean connect() throws Exception {
+        return connect(getInstance().host, getInstance().port);
+    }
+
+    /**
      * Connects to the residue server and waits until connected or throws exception
      * @param host Server host
      * @param port Connection port
