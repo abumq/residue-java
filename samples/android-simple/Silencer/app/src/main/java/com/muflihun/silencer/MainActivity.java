@@ -64,6 +64,7 @@ public class MainActivity extends AppCompatActivity {
 
                 final Residue.Logger l = r.getLogger("default");
                 l.info("Info message");
+                l.debug("Debug message");
             }
         });
     }

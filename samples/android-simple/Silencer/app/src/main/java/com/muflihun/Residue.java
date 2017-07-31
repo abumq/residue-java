@@ -225,7 +225,7 @@ public class Residue {
             public void handle(String data, boolean hasError) {
                 logForDebugging();
                 JsonObject j = new JsonObject();
-                // j.addProperty("_t", ResidueUtils.getTimestamp());
+                j.addProperty("_t", ResidueUtils.getTimestamp());
                 j.addProperty("type", ConnectType.CONNECT.getValue());
                 j.addProperty("key_size", 128);
                 if (getInstance().clientId != null
@@ -274,7 +274,7 @@ public class Residue {
                             getInstance().clientId = nonAckResponse.get("client_id").getAsString();
 
                             JsonObject j = new JsonObject();
-                            //j.addProperty("_t", ResidueUtils.getTimestamp());
+                            j.addProperty("_t", ResidueUtils.getTimestamp());
                             j.addProperty("type", ConnectType.ACKNOWLEGEMENT.getValue());
                             j.addProperty("client_id", getInstance().clientId);
                             String request = new Gson().toJson(j);
@@ -733,7 +733,7 @@ public class Residue {
             }
             final CountDownLatch latch = new CountDownLatch(1);
             JsonObject j = new JsonObject();
-            // j.addProperty("_t", ResidueUtils.getTimestamp());
+            j.addProperty("_t", ResidueUtils.getTimestamp());
             j.addProperty("logger_id", loggerId);
             j.addProperty("access_code", accessCode);
             String request = new Gson().toJson(j);
