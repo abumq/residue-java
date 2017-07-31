@@ -751,7 +751,7 @@ public class Residue {
             }
             final CountDownLatch latch = new CountDownLatch(1);
             JsonObject j = new JsonObject();
-            j.addProperty("_t", ResidueUtils.getTimestamp());
+            j.addProperty("_t", ResidueUtils.getTimestamp()); // with this it doesn't work!!!
             j.addProperty("logger_id", loggerId);
             j.addProperty("access_code", accessCode);
             String request = new Gson().toJson(j);
