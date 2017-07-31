@@ -283,9 +283,7 @@ public class Residue {
                                 @Override
                                 public void handle(String data, boolean hasError) {
                                     logForDebugging();
-                                    ResidueUtils.log("Recv (AES - encrypted): " + data);
                                     String finalConnectionStr = ResidueUtils.decrypt(data, getInstance().key);
-                                    ResidueUtils.log("Recv (AES): " + finalConnectionStr);
                                     JsonObject finalConnection = new Gson().fromJson(finalConnectionStr, JsonObject.class);
                                     if (finalConnection.get("status").getAsInt() == 0) {
                                         getInstance().age = finalConnection.get("age").getAsInt();
@@ -421,7 +419,7 @@ public class Residue {
         AUTHORIZE_LOGGERS_WITH_NO_ACCESS_CODE(4),
         ALLOW_PLAIN_LOG_REQUEST(8),
         ALLOW_BULK_LOG_REQUEST(16),
-        COMPRESSION(512);
+        COMPRESSION(256);
 
         private Integer value;
 
@@ -735,7 +733,7 @@ public class Residue {
             }
             final CountDownLatch latch = new CountDownLatch(1);
             JsonObject j = new JsonObject();
-            j.addProperty("_t", ResidueUtils.getTimestamp());
+            // j.addProperty("_t", ResidueUtils.getTimestamp());
             j.addProperty("logger_id", loggerId);
             j.addProperty("access_code", accessCode);
             String request = new Gson().toJson(j);
