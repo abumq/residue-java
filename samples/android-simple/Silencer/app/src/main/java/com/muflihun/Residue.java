@@ -1,9 +1,8 @@
 package com.muflihun;
 
-import com.muflihun.thirdparty.android.util.Base64;
-
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import com.muflihun.thirdparty.android.util.Base64;
 
 import org.bouncycastle.asn1.ASN1EncodableVector;
 import org.bouncycastle.asn1.ASN1Integer;
@@ -24,6 +23,7 @@ import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.CompletionHandler;
+import java.nio.channels.NotYetConnectedException;
 import java.nio.channels.ReadPendingException;
 import java.security.KeyFactory;
 import java.security.KeyPair;
@@ -31,7 +31,6 @@ import java.security.KeyPairGenerator;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.SecureRandom;
-import java.security.interfaces.RSAPrivateKey;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.ArrayDeque;
@@ -43,8 +42,6 @@ import java.util.Map;
 import java.util.Random;
 import java.util.TimeZone;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 import java.util.zip.DeflaterOutputStream;
 
 import javax.crypto.Cipher;
@@ -54,6 +51,7 @@ import javax.crypto.spec.SecretKeySpec;
 public class Residue {
 
     private static final Integer PING_THRESHOLD = 15; // minimum client_age
+    private static final String DEFAULT_ACCESS_CODE = "default";
 
     private final ResidueClient connectionClient = new ResidueClient();
     private final ResidueClient tokenClient = new ResidueClient();
@@ -369,12 +367,12 @@ public class Residue {
         abstract void handle(String data, boolean hasError);
 
         void logForDebugging() {
-            //ResidueUtils.log("ResponseHandler::handle " + this.id);
+            ResidueUtils.log("ResponseHandler::handle " + this.id);
         }
 
         void logForDebugging(final String data) {
             logForDebugging();
-            //ResidueUtils.log("ResponseHandler::handle::data = " + data);
+            ResidueUtils.log("ResponseHandler::handle::data = " + data);
         }
     }
 
@@ -417,7 +415,7 @@ public class Residue {
     private enum Flag {
         NONE(0),
         ALLOW_UNKNOWN_LOGGERS(1),
-        AUTHORIZE_LOGGERS_WITH_NO_ACCESS_CODE(4),
+        ALLOW_DEFAULT_ACCESS_CODE(4),
         ALLOW_PLAIN_LOG_REQUEST(8),
         ALLOW_BULK_LOG_REQUEST(16),
         COMPRESSION(256);
@@ -469,40 +467,30 @@ public class Residue {
 
         private void read(final ResponseHandler responseHandler) {
             final ByteBuffer buf = ByteBuffer.allocate(4098);
-            /*socketChannel.read(buf, 10, TimeUnit.SECONDS, socketChannel, new CompletionHandler<Integer, AsynchronousSocketChannel>() {
-
-                @Override
-                public void completed(Integer result, AsynchronousSocketChannel channel) {
-                    try {
-                        responseHandler.handle(new String(buf.array(), "UTF-8"), false);
-                    } catch (UnsupportedEncodingException e) {
-                        e.printStackTrace();
-                    }
-                }
-
-                @Override
-                public void failed(Throwable exc, AsynchronousSocketChannel channel) {
-                    responseHandler.handle(exc.getMessage(), true);
-                }
-
-            });*/
-            Future readResult = null;
             try {
-                readResult = socketChannel.read(buf);
-            } catch (ReadPendingException exception) {
-                // We ignore this exception as we may send multiple requests from various threads
-            }
+                socketChannel.read(buf, socketChannel,
+                        new CompletionHandler<Integer, AsynchronousSocketChannel>() {
+                            @Override
+                            public void completed(Integer result, AsynchronousSocketChannel channel) {
+                                try {
+                                    responseHandler.handle(new String(buf.array(), "UTF-8"), false);
+                                } catch (UnsupportedEncodingException e) {
+                                    e.printStackTrace();
+                                }
+                            }
 
-            while (readResult != null && !readResult.isDone()) {
-                try {
-                    Thread.sleep(100);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-            try {
-                responseHandler.handle(new String(buf.array(), "UTF-8"), false);
-            } catch (UnsupportedEncodingException e) {
+                            @Override
+                            public void failed(Throwable exc, AsynchronousSocketChannel channel) {
+                                ResidueUtils.log(exc.getMessage());
+                                responseHandler.handle(exc.getMessage(), true);
+                            }
+
+                        });
+            } catch (ReadPendingException e) {
+                // We ignore this as we may send multiple requests without really waiting for
+                // response
+            } catch (NotYetConnectedException e) {
+                // we may be in the middle of connecting but still log it
                 e.printStackTrace();
             }
         }
@@ -511,8 +499,8 @@ public class Residue {
             ByteBuffer buf = ByteBuffer.allocate(4098);
             buf.put((message + PACKET_DELIMITER).getBytes());
             buf.flip();
-            socketChannel.write(buf, socketChannel, new CompletionHandler<Integer, AsynchronousSocketChannel>(){
-
+            socketChannel.write(buf, socketChannel,
+                    new CompletionHandler<Integer, AsynchronousSocketChannel>() {
                 @Override
                 public void completed(Integer result, AsynchronousSocketChannel channel) {
                     read(responseHandler);
@@ -741,20 +729,23 @@ public class Residue {
                 if (accessCodeMap != null && accessCodeMap.containsKey(loggerId)) {
                     accessCode = accessCodeMap.get(loggerId);
                 } else {
-                    accessCode = "";
+                    accessCode = DEFAULT_ACCESS_CODE;
                 }
             }
-            if (accessCode.isEmpty() && !Flag.AUTHORIZE_LOGGERS_WITH_NO_ACCESS_CODE.isSet()) {
+            if (accessCode == DEFAULT_ACCESS_CODE && !Flag.ALLOW_DEFAULT_ACCESS_CODE.isSet()) {
                 throw new Exception("ERROR: Access code for logger [" + loggerId + "] not provided. Loggers without access code are not allowed by the server.");
-            } else if (accessCode.isEmpty() && Flag.AUTHORIZE_LOGGERS_WITH_NO_ACCESS_CODE.isSet() && !recursiveEmptyAccessCode) {
-                obtainToken(loggerId, "", true);
+            } else if (accessCode == DEFAULT_ACCESS_CODE && Flag.ALLOW_DEFAULT_ACCESS_CODE.isSet() && !recursiveEmptyAccessCode) {
+                // we don't need to get token, server will accept request
+                // without tokens
+                return;
             }
             final CountDownLatch latch = new CountDownLatch(1);
             JsonObject j = new JsonObject();
-            j.addProperty("_t", ResidueUtils.getTimestamp()); // with this it doesn't work!!!
+            j.addProperty("_t", ResidueUtils.getTimestamp());
             j.addProperty("logger_id", loggerId);
             j.addProperty("access_code", accessCode);
             String request = new Gson().toJson(j);
+            ResidueUtils.log(request);
 
             String r = ResidueUtils.encrypt(request, key);
             tokenClient.send(r, new ResponseHandler("tokenClient.send") {
@@ -875,22 +866,29 @@ public class Residue {
                         j = backlog.pop();
                     }
                     if (j != null) {
+                        String token = null;
                         String loggerId = j.get("logger").getAsString();
                         if (!hasValidToken(loggerId)) {
                             try {
                                 ResidueUtils.log("Obtaining new token");
-                                obtainToken(loggerId, null);
+                                obtainToken(loggerId, null /* means read from map */);
                             } catch (Exception e) {
                                 // Ignore
                                 e.printStackTrace();
                             }
                         }
                         ResidueToken tokenObj = tokens.get(loggerId);
-                        if (tokenObj == null) {
+                        if (tokenObj == null && Flag.ALLOW_DEFAULT_ACCESS_CODE.isSet()) {
+                            token = "";
+                        } else if (tokenObj != null) {
+                            token = tokenObj.data;
+                        }
+                        if (token == null) {
                             ResidueUtils.log("Failed to obtain token");
                         } else {
-                            String token = tokenObj.data;
-                            j.addProperty("token", token);
+                            if (!token.isEmpty()) { // token not requried
+                                j.addProperty("token", token);
+                            }
 
                             String request = new Gson().toJson(j);
                             if (Flag.COMPRESSION.isSet()) {
@@ -926,7 +924,8 @@ public class Residue {
     private void log(String loggerId, String msg, LoggingLevels level, Integer vlevel) {
 
         if (getInstance().loggingClient.isConnected) {
-            final int stackItemIndex = level == LoggingLevels.VERBOSE && vlevel > 0 ? 3 : 4;
+            int baseIdx = 5;
+            final int stackItemIndex = level == LoggingLevels.VERBOSE && vlevel > 0 ? baseIdx : (baseIdx + 1);
             final StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
             StackTraceElement stackItem = null;
             if (stackTrace != null && stackTrace.length > stackItemIndex) {

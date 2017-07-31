@@ -22,6 +22,10 @@ public class MainActivity extends AppCompatActivity {
 
             Residue r = Residue.getInstance();
 
+            r.setAccessCodeMap(new HashMap<String, String>() {{
+                put("sample-app", "eif89");
+            }});
+
             try {
                 if (r.connect("192.168.1.103", 8777)) {
 
@@ -65,6 +69,11 @@ public class MainActivity extends AppCompatActivity {
                 final Residue.Logger l = r.getLogger("default");
                 l.info("Info message");
                 l.debug("Debug message");
+                l.verbose("Verbose [3] message", 3);
+                final Residue.Logger l2 = r.getLogger("sample-app");
+                l2.info("Info message");
+                l2.debug("Debug message");
+                l2.verbose("Verbose [3] message", 3);
             }
         });
     }
