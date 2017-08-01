@@ -52,6 +52,7 @@ public class Residue {
 
     private static final Integer PING_THRESHOLD = 15; // minimum client_age
     private static final String DEFAULT_ACCESS_CODE = "default";
+    private static final String JUST_CONNECTED = "CONNECTED";
 
     private final ResidueClient connectionClient = new ResidueClient();
     private final ResidueClient tokenClient = new ResidueClient();
@@ -321,7 +322,7 @@ public class Residue {
                                                 @Override
                                                 public void handle(String data, boolean hasError) {
                                                     logForDebugging();
-                                                    if (Residue.getInstance().tokens.isEmpty() && Residue.getInstance().accessCodeMap != null) {
+                                                    if (JUST_CONNECTED.equals(data) && Residue.getInstance().tokens.isEmpty() && Residue.getInstance().accessCodeMap != null) {
                                                         for (String key : Residue.getInstance().accessCodeMap.keySet()) {
                                                             try {
                                                                 getInstance().obtainToken(key, Residue.getInstance().accessCodeMap.get(key));
@@ -329,6 +330,9 @@ public class Residue {
                                                                 e.printStackTrace();
                                                             }
                                                         }
+                                                    } else if (!JUST_CONNECTED.equals(data) && data != null && !data.isEmpty() && !hasError) {
+                                                        // We received new token
+
                                                     }
                                                     latch.countDown();
                                                 }
@@ -379,21 +383,26 @@ public class Residue {
 
     private abstract static class ResponseHandler {
 
-        String id;
+        private String id;
 
-        ResponseHandler(String id) {
+        public ResponseHandler(String id) {
             this.id = id;
         }
 
-        abstract void handle(String data, boolean hasError);
+        public abstract void handle(String data, boolean hasError);
 
-        void logForDebugging() {
+        public void logForDebugging() {
             ResidueUtils.log("ResponseHandler::handle " + this.id);
         }
 
-        void logForDebugging(final String data) {
+        public void logForDebugging(final String data) {
             logForDebugging();
             ResidueUtils.log("ResponseHandler::handle::data = " + data);
+        }
+
+        @Override
+        public String toString() {
+            return id;
         }
     }
 
@@ -486,7 +495,6 @@ public class Residue {
                         public void completed(Void result, AsynchronousSocketChannel channel) {
                             isConnected = true;
                             responseHandler.handle("CONNECTED", false);
-                            read(responseHandler);
                         }
 
                         @Override
