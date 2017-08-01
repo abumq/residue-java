@@ -1,48 +1,42 @@
 package com.muflihun.silencer;
 
-import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.RadioButton;
 
-import com.muflihun.Residue;
-
-import java.util.HashMap;
+import com.muflihun.residue.Residue;
 
 
 public class MainActivity extends AppCompatActivity {
 
-    private class ResidueConnectTask extends AsyncTask<Object, Object, Void> {
-        protected Void doInBackground(Object... urls) {
+    public void showMessageIfNotConnected(View view) {
 
-            try {
-                Residue.getInstance().connect();
-
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            return null;
+        if (!Residue.getInstance().isConnected()) {
+            Snackbar.make(view, "Not connected!", Snackbar.LENGTH_LONG)
+                    .setAction("Action", null).show();
         }
     }
 
-    public void connect() {
-        final EditText portText = (EditText) findViewById(R.id.textPort);
-        final EditText hostText = (EditText) findViewById(R.id.textHost);
-        Residue r = Residue.getInstance();
+    public Residue.Logger getLogger() {
 
-        r.setAccessCodeMap(new HashMap<String, String>() {{
-            put("sample-app", "eif89");
-        }});
+        final RadioButton defaultLoggerOption = (RadioButton) findViewById(R.id.radioButton);
+        final RadioButton sampleAppLoggerOption = (RadioButton) findViewById(R.id.radioButton2);
 
-        r.setHost(hostText.getText().toString(), Integer.valueOf(portText.getText().toString()));
-        new ResidueConnectTask().execute();
+        if (defaultLoggerOption.isChecked()) {
+            return Loggers.defaultLogger;
+        }
+        if (sampleAppLoggerOption.isChecked()) {
+            return Loggers.sampleAppLogger;
+        }
+
+        return Loggers.nonexistentLogger;
     }
 
     @Override
@@ -52,35 +46,14 @@ public class MainActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        connect();
-
-        Button btnReconnect = (Button) findViewById(R.id.btnReconnect);
-        btnReconnect.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                connect();
-            }
-        });
-
         final EditText editText = (EditText) findViewById(R.id.logMsg);
 
         Button btnInfo = (Button) findViewById(R.id.logI);
         btnInfo.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-
-                if (Residue.getInstance().isConnected()) {
-
-                    Snackbar.make(view, "Sending...", Snackbar.LENGTH_LONG)
-                            .setAction("Action", null).show();
-                } else {
-
-                    Snackbar.make(view, "Not connected!", Snackbar.LENGTH_LONG)
-                            .setAction("Action", null).show();
-                }
-
-                final Residue.Logger logger = Residue.getInstance().getLogger("default");
-                logger.info(editText.getText().toString());
+                showMessageIfNotConnected(view);
+                getLogger().info(editText.getText().toString());
             }
         });
 
@@ -89,18 +62,8 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
 
-                if (Residue.getInstance().isConnected()) {
-
-                    Snackbar.make(view, "Sending...", Snackbar.LENGTH_LONG)
-                            .setAction("Action", null).show();
-                } else {
-
-                    Snackbar.make(view, "Not connected!", Snackbar.LENGTH_LONG)
-                            .setAction("Action", null).show();
-                }
-
-                final Residue.Logger logger = Residue.getInstance().getLogger("default");
-                logger.debug(editText.getText().toString());
+                showMessageIfNotConnected(view);
+                getLogger().debug(editText.getText().toString());
             }
         });
 
@@ -109,18 +72,8 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
 
-                if (Residue.getInstance().isConnected()) {
-
-                    Snackbar.make(view, "Sending...", Snackbar.LENGTH_LONG)
-                            .setAction("Action", null).show();
-                } else {
-
-                    Snackbar.make(view, "Not connected!", Snackbar.LENGTH_LONG)
-                            .setAction("Action", null).show();
-                }
-
-                final Residue.Logger logger = Residue.getInstance().getLogger("default");
-                logger.verbose(editText.getText().toString(), 3);
+                showMessageIfNotConnected(view);
+                getLogger().verbose(editText.getText().toString(), 3);
             }
         });
     }
@@ -141,7 +94,7 @@ public class MainActivity extends AppCompatActivity {
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_reconnect) {
-            new ResidueConnectTask().execute();
+            setContentView(R.layout.activity_connect);
             return true;
         }
 

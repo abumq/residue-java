@@ -11,7 +11,7 @@ android {
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         //jackOptions {
-            //enabled true
+        //enabled true
         //}
     }
     buildTypes {
@@ -24,8 +24,8 @@ android {
         }
     }
     //compileOptions {
-        //sourceCompatibility JavaVersion.VERSION_1_8
-        //targetCompatibility JavaVersion.VERSION_1_8
+    //sourceCompatibility JavaVersion.VERSION_1_8
+    //targetCompatibility JavaVersion.VERSION_1_8
     //}
     productFlavors {
     }
@@ -36,10 +36,10 @@ dependencies {
     androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
+    compile files('lib/gson-2.6.2.jar')
+    compile files('lib/bcprov-jdk15on-156.jar')
     compile 'com.android.support:appcompat-v7:25.3.0'
     compile 'com.android.support.constraint:constraint-layout:1.0.2'
     compile 'com.android.support:design:25.3.0'
     testCompile 'junit:junit:4.12'
-    compile files('libs/bcprov-jdk15on-156.jar')
-    compile files('libs/gson-2.6.2.jar')
 }

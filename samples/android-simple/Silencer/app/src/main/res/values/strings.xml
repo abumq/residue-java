@@ -1,4 +1,5 @@
 <resources>
     <string name="app_name">Silencer</string>
     <string name="action_reconnect">Reconnect</string>
+    <string name="title_activity_connect">ConnectActivity</string>
 </resources>
