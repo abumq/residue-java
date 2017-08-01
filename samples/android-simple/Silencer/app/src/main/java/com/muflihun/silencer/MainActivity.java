@@ -1,5 +1,6 @@
 package com.muflihun.silencer;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
@@ -47,13 +48,19 @@ public class MainActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
 
         final EditText editText = (EditText) findViewById(R.id.logMsg);
+        final EditText numberOfMsgs = (EditText) findViewById(R.id.txtNumberOfMsgs);
 
         Button btnInfo = (Button) findViewById(R.id.logI);
         btnInfo.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 showMessageIfNotConnected(view);
-                getLogger().info(editText.getText().toString());
+                Integer count = Integer.valueOf(numberOfMsgs.getText().toString());
+                for (Integer i = 1; i <= count; ++i) {
+                    // if user enters %c in msg it will be replaced with idx
+                    String msg = editText.getText().toString().replace("%c", i.toString());
+                    getLogger().info(msg);
+                }
             }
         });
 
@@ -63,7 +70,12 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View view) {
 
                 showMessageIfNotConnected(view);
-                getLogger().debug(editText.getText().toString());
+                Integer count = Integer.valueOf(numberOfMsgs.getText().toString());
+                for (Integer i = 1; i <= count; ++i) {
+                    // if user enters %c in msg it will be replaced with idx
+                    String msg = editText.getText().toString().replace("%c", i.toString());
+                    getLogger().debug(msg);
+                }
             }
         });
 
@@ -73,7 +85,12 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View view) {
 
                 showMessageIfNotConnected(view);
-                getLogger().verbose(editText.getText().toString(), 3);
+                Integer count = Integer.valueOf(numberOfMsgs.getText().toString());
+                for (Integer i = 1; i <= count; ++i) {
+                    // if user enters %c in msg it will be replaced with idx
+                    String msg = editText.getText().toString().replace("%c", i.toString());
+                    getLogger().verbose(msg, 3);
+                }
             }
         });
     }
@@ -94,7 +111,8 @@ public class MainActivity extends AppCompatActivity {
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_reconnect) {
-            setContentView(R.layout.activity_connect);
+            Intent Intent = new Intent(this, ConnectActivity.class);
+            startActivity(Intent);
             return true;
         }
 

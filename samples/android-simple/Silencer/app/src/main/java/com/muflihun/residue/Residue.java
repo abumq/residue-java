@@ -228,6 +228,10 @@ public class Residue {
         getInstance().port = port;
         getInstance().connecting = true;
         getInstance().connected = false;
+        getInstance().connectionClient.destroy();
+        getInstance().tokenClient.destroy();
+        getInstance().loggingClient.destroy();
+
         final Map<String, String> accessCodeMap = getInstance().accessCodeMap;
         getInstance().tokens.clear();
 
@@ -461,6 +465,17 @@ public class Residue {
 
         private ResidueClient() {
             isConnected = false;
+        }
+
+        private void destroy() {
+            try {
+                if (isConnected && socketChannel.isOpen()) {
+                    isConnected = false;
+                    socketChannel.close();
+                }
+            } catch (IOException e) {
+                // ignore
+            }
         }
 
         private void connect(String host, Integer port, final ResponseHandler responseHandler) throws IOException {

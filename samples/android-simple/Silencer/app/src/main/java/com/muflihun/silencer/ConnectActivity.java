@@ -1,8 +1,7 @@
 package com.muflihun.silencer;
 
+import android.content.Intent;
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.View;
@@ -20,6 +19,7 @@ public class ConnectActivity extends AppCompatActivity {
         final EditText portText = (EditText) findViewById(R.id.textPort);
         final EditText hostText = (EditText) findViewById(R.id.textHost);
         Residue r = Residue.getInstance();
+        System.out.println("connect()...");
 
         r.setAccessCodeMap(new HashMap<String, String>() {{
             put("sample-app", "eif89");
@@ -27,6 +27,11 @@ public class ConnectActivity extends AppCompatActivity {
 
         r.setHost(hostText.getText().toString(), Integer.valueOf(portText.getText().toString()));
         new ResidueConnectTask().execute();
+    }
+
+    public void gotoMain() {
+        Intent Intent = new Intent(this, MainActivity.class);
+        startActivity(Intent);
     }
 
     @Override
@@ -41,6 +46,15 @@ public class ConnectActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 connect();
+                gotoMain();
+            }
+        });
+
+        Button btnCancel = (Button) findViewById(R.id.button3);
+        btnCancel.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                gotoMain();
             }
         });
     }
