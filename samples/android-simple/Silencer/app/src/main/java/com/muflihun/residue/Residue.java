@@ -50,9 +50,8 @@ import javax.crypto.spec.SecretKeySpec;
 
 public class Residue {
 
-    private static final Integer PING_THRESHOLD = 15; // minimum client_age
+    private static final Integer PING_THRESHOLD = 60;
     private static final String DEFAULT_ACCESS_CODE = "default";
-    private static final String JUST_CONNECTED = "CONNECTED";
 
     private final ResidueClient connectionClient = new ResidueClient();
     private final ResidueClient tokenClient = new ResidueClient();
@@ -322,7 +321,7 @@ public class Residue {
                                                 @Override
                                                 public void handle(String data, boolean hasError) {
                                                     logForDebugging();
-                                                    if (JUST_CONNECTED.equals(data) && Residue.getInstance().tokens.isEmpty() && Residue.getInstance().accessCodeMap != null) {
+                                                    if (Residue.getInstance().tokens.isEmpty() && Residue.getInstance().accessCodeMap != null) {
                                                         for (String key : Residue.getInstance().accessCodeMap.keySet()) {
                                                             try {
                                                                 getInstance().obtainToken(key, Residue.getInstance().accessCodeMap.get(key));
@@ -330,9 +329,6 @@ public class Residue {
                                                                 e.printStackTrace();
                                                             }
                                                         }
-                                                    } else if (!JUST_CONNECTED.equals(data) && data != null && !data.isEmpty() && !hasError) {
-                                                        // We received new token
-
                                                     }
                                                     latch.countDown();
                                                 }
