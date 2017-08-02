@@ -6,7 +6,7 @@ public class ResidueConnectTask extends AsyncTask<Object, Object, Void> {
     protected Void doInBackground(Object... urls) {
 
         try {
-            Residue.getInstance().connect();
+            Residue.getInstance().reconnect();
 
         } catch (Exception e) {
             e.printStackTrace();

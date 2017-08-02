@@ -19,7 +19,7 @@ public class ConnectActivity extends AppCompatActivity {
         final EditText portText = (EditText) findViewById(R.id.textPort);
         final EditText hostText = (EditText) findViewById(R.id.textHost);
         Residue r = Residue.getInstance();
-        System.out.println("connect()...");
+        System.out.println("reconnect()...");
 
         r.setAccessCodeMap(new HashMap<String, String>() {{
             put("sample-app", "eif89");

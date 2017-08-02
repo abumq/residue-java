@@ -211,7 +211,7 @@ public class Residue {
      * @see #setHost(String, Integer)
      * @see #connect(String, Integer)
      */
-    public static boolean connect() throws Exception {
+    public static boolean reconnect() throws Exception {
         return connect(getInstance().host, getInstance().port);
     }
 
@@ -223,7 +223,7 @@ public class Residue {
      * @throws Exception If any exception is thrown
      */
     public static boolean connect(final String host, final Integer port) throws Exception {
-        ResidueUtils.log("connect()");
+        ResidueUtils.log("reconnect()");
         getInstance().host = host;
         getInstance().port = port;
         getInstance().connecting = true;
@@ -242,7 +242,7 @@ public class Residue {
             getInstance().privateKey = ResidueUtils.getPemPrivateKey(getInstance().privateKeyFilename);
         }
 
-        getInstance().connectionClient.connect(getInstance().host, getInstance().port, new ResponseHandler("connectionClient.connect") {
+        getInstance().connectionClient.connect(getInstance().host, getInstance().port, new ResponseHandler("connectionClient.reconnect") {
             @Override
             public void handle(String data, boolean hasError) {
                 logForDebugging();
@@ -289,7 +289,7 @@ public class Residue {
                                 return;
                             }
                             s2 = s2.substring(pos); // FIXME: Fix this decryption! // TODO: FOR_ANDROID
-                            ResidueUtils.log("Recv (RSA): " + s2); // TODO: FOR_ANDROID
+                            //ResidueUtils.log("Recv (RSA): " + s2); // TODO: FOR_ANDROID
                             JsonObject nonAckResponse = new Gson().fromJson(s2, JsonObject.class);
 
                             getInstance().key = nonAckResponse.get("key").getAsString();
@@ -317,7 +317,7 @@ public class Residue {
                                         getInstance().dateCreated = new Date(finalConnection.get("date_created").getAsLong() * 1000);
                                         getInstance().connected = true;
                                         try {
-                                            getInstance().tokenClient.connect(getInstance().host, getInstance().tokenPort, new ResponseHandler("tokenClient.connect") {
+                                            getInstance().tokenClient.connect(getInstance().host, getInstance().tokenPort, new ResponseHandler("tokenClient.reconnect") {
                                                 @Override
                                                 public void handle(String data, boolean hasError) {
                                                     logForDebugging();
@@ -337,7 +337,7 @@ public class Residue {
                                             latch.countDown();
                                         }
                                         try {
-                                            getInstance().loggingClient.connect(getInstance().host, getInstance().loggingPort, new ResponseHandler("loggingClient.connect") {
+                                            getInstance().loggingClient.connect(getInstance().host, getInstance().loggingPort, new ResponseHandler("loggingClient.reconnect") {
                                                 @Override
                                                 public void handle(String data, boolean hasError) {
                                                     logForDebugging();
@@ -496,7 +496,7 @@ public class Residue {
 
                         @Override
                         public void failed(Throwable exc, AsynchronousSocketChannel channel) {
-                            ResidueUtils.log("Failed to connect to the server " + exc);
+                            ResidueUtils.log("Failed to reconnect to the server " + exc);
                             responseHandler.handle("FAILED", true);
                         }
                     });
@@ -889,7 +889,7 @@ public class Residue {
                             ResidueUtils.log("Reconnecting...");
                             connect(host, port);
                         } catch (Exception e) {
-                            // Unable to connect
+                            // Unable to reconnect
                             e.printStackTrace();
                         }
                     }
