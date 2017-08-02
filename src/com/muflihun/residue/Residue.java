@@ -441,6 +441,7 @@ public class Residue {
     private enum Flag {
         NONE(0),
         ALLOW_UNKNOWN_LOGGERS(1),
+        CHECK_TOKENS(2),
         ALLOW_DEFAULT_ACCESS_CODE(4),
         ALLOW_PLAIN_LOG_REQUEST(8),
         ALLOW_BULK_LOG_REQUEST(16),
@@ -755,10 +756,6 @@ public class Residue {
     }
 
     private void obtainToken(final String loggerId, String accessCode) throws Exception {
-        obtainToken(loggerId, accessCode, false);
-    }
-
-    private void obtainToken(final String loggerId, String accessCode, boolean recursiveEmptyAccessCode) throws Exception {
 
         if (tokenClient.isConnected) {
             if (accessCode == null) {
@@ -770,7 +767,11 @@ public class Residue {
             }
             if (DEFAULT_ACCESS_CODE.equals(accessCode) && !Flag.ALLOW_DEFAULT_ACCESS_CODE.isSet()) {
                 throw new Exception("ERROR: Access code for logger [" + loggerId + "] not provided. Loggers without access code are not allowed by the server.");
-            } else if (DEFAULT_ACCESS_CODE.equals(accessCode) && Flag.ALLOW_DEFAULT_ACCESS_CODE.isSet() && !recursiveEmptyAccessCode) {
+            } else if (DEFAULT_ACCESS_CODE.equals(accessCode) && Flag.ALLOW_DEFAULT_ACCESS_CODE.isSet()) {
+                // we don't need to get token, server will accept request
+                // without tokens
+                return;
+            } else if (!Flag.CHECK_TOKENS.isSet()) {
                 // we don't need to get token, server will accept request
                 // without tokens
                 return;
