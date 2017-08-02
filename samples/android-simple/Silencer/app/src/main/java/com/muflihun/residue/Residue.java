@@ -321,7 +321,7 @@ public class Residue {
                                                 @Override
                                                 public void handle(String data, boolean hasError) {
                                                     logForDebugging();
-                                                    if (Residue.getInstance().tokens.isEmpty() && Residue.getInstance().accessCodeMap != null) {
+                                                    if (Flag.CHECK_TOKENS.isSet() && Residue.getInstance().tokens.isEmpty() && Residue.getInstance().accessCodeMap != null) {
                                                         for (String key : Residue.getInstance().accessCodeMap.keySet()) {
                                                             try {
                                                                 getInstance().obtainToken(key, Residue.getInstance().accessCodeMap.get(key));
@@ -771,10 +771,6 @@ public class Residue {
                 // we don't need to get token, server will accept request
                 // without tokens
                 return;
-            } else if (!Flag.CHECK_TOKENS.isSet()) {
-                // we don't need to get token, server will accept request
-                // without tokens
-                return;
             }
             final CountDownLatch latch = new CountDownLatch(1);
             JsonObject j = new JsonObject();
@@ -818,6 +814,9 @@ public class Residue {
     }
 
     private boolean hasValidToken(String loggerId) {
+        if (!Flag.CHECK_TOKENS.isSet()) {
+            return true;
+        }
         if (!tokens.containsKey(loggerId)) {
             return false;
         }
@@ -915,7 +914,8 @@ public class Residue {
                             }
                         }
                         ResidueToken tokenObj = tokens.get(loggerId);
-                        if (tokenObj == null && Flag.ALLOW_DEFAULT_ACCESS_CODE.isSet()) {
+                        if (tokenObj == null
+                                && (Flag.ALLOW_DEFAULT_ACCESS_CODE.isSet() || !Flag.CHECK_TOKENS.isSet())) {
                             token = "";
                         } else if (tokenObj != null) {
                             token = tokenObj.data;
