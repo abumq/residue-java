@@ -24,6 +24,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousSocketChannel;
+import java.nio.channels.ClosedChannelException;
 import java.nio.channels.CompletionHandler;
 import java.nio.channels.NotYetConnectedException;
 import java.nio.channels.ReadPendingException;
@@ -65,6 +66,7 @@ public class Residue {
 
     private static final Integer TOUCH_THRESHOLD = 120; // should always be min(client_age)
     private static final String DEFAULT_ACCESS_CODE = "default";
+    private static final Integer ALLOCATION_BUFFER_SIZE = 4098;
 
     private final ResidueClient connectionClient = new ResidueClient();
     private final ResidueClient tokenClient = new ResidueClient();
@@ -577,14 +579,14 @@ public class Residue {
         }
 
         private void read(final ResponseHandler responseHandler) {
-            final ByteBuffer buf = ByteBuffer.allocate(4098);
+            final ByteBuffer buf = ByteBuffer.allocate(ALLOCATION_BUFFER_SIZE);
             try {
                 socketChannel.read(buf, socketChannel,
                         new CompletionHandler<Integer, AsynchronousSocketChannel>() {
                             @Override
                             public void completed(Integer result, AsynchronousSocketChannel channel) {
                                 try {
-                                    responseHandler.handle(new String(buf.array(), "UTF-8"), false);
+                                    responseHandler.handle(new String(buf.array(), "UTF-8").substring(0, ALLOCATION_BUFFER_SIZE - buf.remaining()), false);
                                 } catch (UnsupportedEncodingException e) {
                                     e.printStackTrace();
                                 }
@@ -611,23 +613,23 @@ public class Residue {
         }
 
         private void send(final String message, final ResponseHandler responseHandler) {
-            ByteBuffer buf = ByteBuffer.allocate(4098);
+            ByteBuffer buf = ByteBuffer.allocate(ALLOCATION_BUFFER_SIZE);
             buf.put((message + PACKET_DELIMITER).getBytes());
             buf.flip();
             socketChannel.write(buf, socketChannel,
                     new CompletionHandler<Integer, AsynchronousSocketChannel>() {
-                @Override
-                public void completed(Integer result, AsynchronousSocketChannel channel) {
-                    read(responseHandler);
-                }
+                        @Override
+                        public void completed(Integer result, AsynchronousSocketChannel channel) {
+                            read(responseHandler);
+                        }
 
-                @Override
-                public void failed(Throwable exc, AsynchronousSocketChannel channel) {
-                    exc.printStackTrace();
-                    read(responseHandler);
-                }
+                        @Override
+                        public void failed(Throwable exc, AsynchronousSocketChannel channel) {
+                            exc.printStackTrace();
+                            read(responseHandler);
+                        }
 
-            });
+                    });
         }
     }
 
@@ -647,7 +649,7 @@ public class Residue {
         }
 
         private static void debugLog(Object msg) {
-            // System.out.println(msg);
+            System.out.println(msg);
         }
 
         private static PrivateKey getPemPrivateKey(String filename) throws Exception {
@@ -977,7 +979,6 @@ public class Residue {
 						continue;
 					}
 					if (!isConnected()) {
-                        // TODO: doesnt work for android
                         try {
                             ResidueUtils.log("Trying to reconnect...");
                             connect(host, port);
@@ -1075,13 +1076,20 @@ public class Residue {
                     getInstance().loggingClient.send(r, new ResponseHandler("loggingClient.send") {
                         @Override
                         public void handle(String data, boolean hasError) {
+                            if (data.isEmpty()) {
+                                // Not connected
+                                getInstance().connected = false;
+                                getInstance().loggingClient.isConnected = false;
+                            } else {
+                                ResidueUtils.debugLog("loggingClient response: " + data);
+                            }
                         }
                     });
-                    try {
-                        Thread.sleep(dispatchDelay);
-                    } catch (InterruptedException e) {
-                        // Ignore
-                    }
+                }
+                try {
+                    Thread.sleep(dispatchDelay);
+                } catch (InterruptedException e) {
+                    // Ignore
                 }
             }
         }

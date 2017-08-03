@@ -24,6 +24,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousSocketChannel;
+import java.nio.channels.ClosedChannelException;
 import java.nio.channels.CompletionHandler;
 import java.nio.channels.NotYetConnectedException;
 import java.nio.channels.ReadPendingException;
@@ -53,10 +54,19 @@ import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
+/**
+ * Provides logging interface for interacting with residue server seamlessly
+ *
+ * For the functions that do not have documentation, please refer to C++ library's documentation,
+ * all the concepts and naming conventions are same for all the official residue client libraries
+ *
+ * @see <a href='https://muflihun.github.io/residue/'>C++ API Documentation </a>
+ */
 public class Residue {
 
     private static final Integer TOUCH_THRESHOLD = 120; // should always be min(client_age)
     private static final String DEFAULT_ACCESS_CODE = "default";
+    private static final Integer ALLOCATION_BUFFER_SIZE = 4098;
 
     private final ResidueClient connectionClient = new ResidueClient();
     private final ResidueClient tokenClient = new ResidueClient();
@@ -77,9 +87,9 @@ public class Residue {
     private Integer bulkSize = 0;
 
     private Map<String, String> accessCodeMap;
-    private volatile Map<String, ResidueToken> tokens = new HashMap<>();
-    private volatile Deque<JsonObject> backlog = new ArrayDeque<>();
-    private volatile Map<String, Logger> loggers = new HashMap<>();
+    private final Map<String, ResidueToken> tokens = new HashMap<>();
+    private final Deque<JsonObject> backlog = new ArrayDeque<>();
+    private final Map<String, Logger> loggers = new HashMap<>();
 
     private String privateKeyFilename;
     private PrivateKey privateKey;
@@ -115,6 +125,14 @@ public class Residue {
         this.connecting = false;
         this.utcTime = false;
         this.timeOffset = 0;
+    }
+
+    public String getHost() {
+        return host;
+    }
+
+    public Integer getPort() {
+        return port;
     }
 
     public String getLastError() {
@@ -235,7 +253,7 @@ public class Residue {
      * Gets existing or new logger
      * @see Logger
      */
-    public Logger getLogger(String id) {
+    public synchronized Logger getLogger(String id) {
         if (loggers.containsKey(id)) {
             return loggers.get(id);
         }
@@ -253,7 +271,10 @@ public class Residue {
     }
 
     /**
-     * Connects to previously set host and port
+     * Connects to previously set host and port.
+     *
+     * You will need to make sure host and port is already set
+     *
      * @see #setHost(String, Integer)
      * @see #connect(String, Integer)
      */
@@ -277,7 +298,9 @@ public class Residue {
         getInstance().connectionClient.destroy();
         getInstance().tokenClient.destroy();
         getInstance().loggingClient.destroy();
-        getInstance().tokens.clear();
+        synchronized (getInstance().tokens) {
+            getInstance().tokens.clear();
+        }
 
         final CountDownLatch latch = new CountDownLatch(3); // 3 connection sockets
         if (getInstance().clientId != null && !getInstance().clientId.isEmpty()
@@ -377,7 +400,7 @@ public class Residue {
                                                 @Override
                                                 public void handle(String data, boolean hasError) {
                                                     logForDebugging();
-                                                    if (Flag.CHECK_TOKENS.isSet() && Residue.getInstance().tokens.isEmpty() && Residue.getInstance().accessCodeMap != null) {
+                                                    if (Flag.CHECK_TOKENS.isSet() && Residue.getInstance().accessCodeMap != null) {
                                                         for (String key : Residue.getInstance().accessCodeMap.keySet()) {
                                                             try {
                                                                 getInstance().obtainToken(key, Residue.getInstance().accessCodeMap.get(key));
@@ -556,14 +579,14 @@ public class Residue {
         }
 
         private void read(final ResponseHandler responseHandler) {
-            final ByteBuffer buf = ByteBuffer.allocate(4098);
+            final ByteBuffer buf = ByteBuffer.allocate(ALLOCATION_BUFFER_SIZE);
             try {
                 socketChannel.read(buf, socketChannel,
                         new CompletionHandler<Integer, AsynchronousSocketChannel>() {
                             @Override
                             public void completed(Integer result, AsynchronousSocketChannel channel) {
                                 try {
-                                    responseHandler.handle(new String(buf.array(), "UTF-8"), false);
+                                    responseHandler.handle(new String(buf.array(), "UTF-8").substring(0, ALLOCATION_BUFFER_SIZE - buf.remaining()), false);
                                 } catch (UnsupportedEncodingException e) {
                                     e.printStackTrace();
                                 }
@@ -590,23 +613,23 @@ public class Residue {
         }
 
         private void send(final String message, final ResponseHandler responseHandler) {
-            ByteBuffer buf = ByteBuffer.allocate(4098);
+            ByteBuffer buf = ByteBuffer.allocate(ALLOCATION_BUFFER_SIZE);
             buf.put((message + PACKET_DELIMITER).getBytes());
             buf.flip();
             socketChannel.write(buf, socketChannel,
                     new CompletionHandler<Integer, AsynchronousSocketChannel>() {
-                @Override
-                public void completed(Integer result, AsynchronousSocketChannel channel) {
-                    read(responseHandler);
-                }
+                        @Override
+                        public void completed(Integer result, AsynchronousSocketChannel channel) {
+                            read(responseHandler);
+                        }
 
-                @Override
-                public void failed(Throwable exc, AsynchronousSocketChannel channel) {
-                    exc.printStackTrace();
-                    read(responseHandler);
-                }
+                        @Override
+                        public void failed(Throwable exc, AsynchronousSocketChannel channel) {
+                            exc.printStackTrace();
+                            read(responseHandler);
+                        }
 
-            });
+                    });
         }
     }
 
@@ -626,7 +649,7 @@ public class Residue {
         }
 
         private static void debugLog(Object msg) {
-            // System.out.println(msg);
+            System.out.println(msg);
         }
 
         private static PrivateKey getPemPrivateKey(String filename) throws Exception {
@@ -857,7 +880,9 @@ public class Residue {
                             token.data = tokenResponse.get("token").getAsString();
                             token.life = tokenResponse.get("life").getAsInt();
                             token.dateCreated = new Date();
-                            tokens.put(loggerId, token);
+                            synchronized (tokens) {
+                                tokens.put(loggerId, token);
+                            }
                         } else {
                             lastError = tokenResponse.get("error_text").getAsString();
                             ResidueUtils.log(getInstance().lastError);
@@ -873,7 +898,7 @@ public class Residue {
 
     }
 
-    private boolean hasValidToken(String loggerId) {
+    private synchronized boolean hasValidToken(String loggerId) {
         if (!Flag.CHECK_TOKENS.isSet()) {
             return true;
         }
@@ -954,7 +979,6 @@ public class Residue {
 						continue;
 					}
 					if (!isConnected()) {
-                        // TODO: doesnt work for android
                         try {
                             ResidueUtils.log("Trying to reconnect...");
                             connect(host, port);
@@ -1009,7 +1033,10 @@ public class Residue {
                                 e.printStackTrace();
                             }
                         }
-                        ResidueToken tokenObj = tokens.get(loggerId);
+                        ResidueToken tokenObj = null;
+                        synchronized (tokens) {
+                            tokenObj = tokens.get(loggerId);
+                        }
                         if (tokenObj == null
                                 && (Flag.ALLOW_DEFAULT_ACCESS_CODE.isSet() || !Flag.CHECK_TOKENS.isSet())) {
                             tokenList.put(loggerId, "");
@@ -1049,25 +1076,42 @@ public class Residue {
                     getInstance().loggingClient.send(r, new ResponseHandler("loggingClient.send") {
                         @Override
                         public void handle(String data, boolean hasError) {
+                            if (data.isEmpty()) {
+                                // Not connected
+                                getInstance().connected = false;
+                                getInstance().loggingClient.isConnected = false;
+                            } else {
+                                ResidueUtils.debugLog("loggingClient response: " + data);
+                            }
                         }
                     });
-                    try {
-                        Thread.sleep(dispatchDelay);
-                    } catch (InterruptedException e) {
-                        // Ignore
-                    }
+                }
+                try {
+                    Thread.sleep(dispatchDelay);
+                } catch (InterruptedException e) {
+                    // Ignore
                 }
             }
         }
     });
 
     private void log(String loggerId, String msg, LoggingLevels level, Integer vlevel) {
+        String sourceFilename = "";
         int baseIdx = 4;
-        final int stackItemIndex = level == LoggingLevels.VERBOSE && vlevel > 0 ? baseIdx : (baseIdx + 1);
-        final StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
         StackTraceElement stackItem = null;
-        if (stackTrace != null && stackTrace.length > stackItemIndex) {
-            stackItem = Thread.currentThread().getStackTrace()[stackItemIndex];
+        while (sourceFilename.isEmpty() || "Residue.java".equals(sourceFilename)) {
+            final int stackItemIndex = level == LoggingLevels.VERBOSE && vlevel > 0 ? baseIdx : (baseIdx + 1);
+            final StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
+            if (stackTrace != null && stackTrace.length > stackItemIndex) {
+                stackItem = Thread.currentThread().getStackTrace()[stackItemIndex];
+                sourceFilename = stackItem == null ? "" : stackItem.getFileName();
+            }
+            baseIdx++;
+            if (baseIdx >= 10) {
+                // too much effort, leave it!
+                // technically it should be resolved when baseIdx == 4 or 5 or max 6
+                break;
+            }
         }
 
         Calendar c = Calendar.getInstance();
@@ -1090,7 +1134,7 @@ public class Residue {
         j.addProperty("datetime", c.getTime().getTime());
         j.addProperty("logger", loggerId);
         j.addProperty("msg", msg);
-        j.addProperty("file", stackItem == null ? "" : stackItem.getFileName());
+        j.addProperty("file", sourceFilename);
         j.addProperty("line", stackItem == null ? 0 : stackItem.getLineNumber());
         j.addProperty("app", applicationName);
         j.addProperty("level", level.getValue());
