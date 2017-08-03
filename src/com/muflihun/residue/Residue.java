@@ -50,7 +50,7 @@ import javax.crypto.spec.SecretKeySpec;
 
 public class Residue {
 
-    private static final Integer TOUCH_THRESHOLD = 60;
+    private static final Integer TOUCH_THRESHOLD = 120; // should always be min(client_age)
     private static final String DEFAULT_ACCESS_CODE = "default";
 
     private final ResidueClient connectionClient = new ResidueClient();
