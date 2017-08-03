@@ -24,7 +24,6 @@ import java.io.UnsupportedEncodingException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousSocketChannel;
-import java.nio.channels.ClosedChannelException;
 import java.nio.channels.CompletionHandler;
 import java.nio.channels.NotYetConnectedException;
 import java.nio.channels.ReadPendingException;
@@ -56,7 +55,7 @@ import javax.crypto.spec.SecretKeySpec;
 
 /**
  * Provides logging interface for interacting with residue server seamlessly
- *
+ * <p>
  * For the functions that do not have documentation, please refer to C++ library's documentation,
  * all the concepts and naming conventions are same for all the official residue client libraries
  *
@@ -72,6 +71,10 @@ public class Residue {
     private final ResidueClient tokenClient = new ResidueClient();
     private final ResidueClient loggingClient = new ResidueClient();
 
+    private final Deque<JsonObject> backlog = new ArrayDeque<>();
+    private final Map<String, ResidueToken> tokens = new HashMap<>();
+    private final Map<String, Logger> loggers = new HashMap<>();
+
     private String host;
     private Integer port;
     private Integer loggingPort;
@@ -81,15 +84,12 @@ public class Residue {
     private Integer keySize = 128;
     private Boolean utcTime = false;
     private Integer timeOffset;
-	private Integer dispatchDelay = 1;
+    private Integer dispatchDelay = 1;
     private Boolean autoBulkParams = true;
     private Boolean bulkDispatch = false;
     private Integer bulkSize = 0;
 
     private Map<String, String> accessCodeMap;
-    private final Map<String, ResidueToken> tokens = new HashMap<>();
-    private final Deque<JsonObject> backlog = new ArrayDeque<>();
-    private final Map<String, Logger> loggers = new HashMap<>();
 
     private String privateKeyFilename;
     private PrivateKey privateKey;
@@ -165,7 +165,7 @@ public class Residue {
 
     /**
      * Applicable to unknown clients only. Known clients already have public key on the server
-     *
+     * <p>
      * Accepted values are 1024, 2048, 4096
      *
      * @throws IllegalArgumentException if invalid key size is provided
@@ -251,6 +251,7 @@ public class Residue {
 
     /**
      * Gets existing or new logger
+     *
      * @see Logger
      */
     public synchronized Logger getLogger(String id) {
@@ -272,7 +273,7 @@ public class Residue {
 
     /**
      * Connects to previously set host and port.
-     *
+     * <p>
      * You will need to make sure host and port is already set
      *
      * @see #setHost(String, Integer)
@@ -284,6 +285,7 @@ public class Residue {
 
     /**
      * Connects to the residue server and waits until connected or throws exception
+     *
      * @param host Server host
      * @param port Connection port
      * @return True if successfully connected, otherwise false
@@ -327,7 +329,7 @@ public class Residue {
                     ResidueUtils.log("Generating " + getInstance().rsaKeySize + "-bit key...");
                     KeyPair p = ResidueUtils.createNewKeyPair(getInstance().rsaKeySize);
                     getInstance().privateKey = p.getPrivate();
-                    j.addProperty("rsa_public_key",  ResidueUtils.keyToPem(p.getPublic()));
+                    j.addProperty("rsa_public_key", ResidueUtils.keyToPem(p.getPublic()));
                 }
 
                 String request = new Gson().toJson(j);
@@ -346,15 +348,15 @@ public class Residue {
                     @Override
                     public void handle(String data, boolean hasError) {
                         logForDebugging();
-						if (hasError) {
-							ResidueUtils.log("Failed to connect, connection refused");
-					        getInstance().connecting = false;
-					        getInstance().connected = false;
-							latch.countDown();
-							latch.countDown();
-							latch.countDown();
-							return;
-						}
+                        if (hasError) {
+                            ResidueUtils.log("Failed to connect, connection refused");
+                            getInstance().connecting = false;
+                            getInstance().connected = false;
+                            latch.countDown();
+                            latch.countDown();
+                            latch.countDown();
+                            return;
+                        }
                         try {
                             byte[] decoded = ResidueUtils.base64Decode(data);
                             String s2 = ResidueUtils.decryptRSA(decoded, getInstance().privateKey);
@@ -364,7 +366,6 @@ public class Residue {
                                 return;
                             }
                             s2 = s2.substring(pos); // FIXME: Fix this decryption! // TODO: FOR_ANDROID
-                            //ResidueUtils.log("Recv (RSA): " + s2); // TODO: FOR_ANDROID
                             JsonObject nonAckResponse = new Gson().fromJson(s2, JsonObject.class);
 
                             getInstance().key = nonAckResponse.get("key").getAsString();
@@ -390,10 +391,10 @@ public class Residue {
                                         getInstance().maxBulkSize = finalConnection.get("max_bulk_size").getAsInt();
                                         getInstance().serverFlags = finalConnection.get("flags").getAsInt();
                                         getInstance().dateCreated = new Date(finalConnection.get("date_created").getAsLong() * 1000);
-										if (Boolean.TRUE.equals(getInstance().autoBulkParams) && Flag.ALLOW_BULK_LOG_REQUEST.isSet()) {
-											getInstance().bulkSize = Math.min(getInstance().maxBulkSize, 40);
-											getInstance().bulkDispatch = true;
-										}
+                                        if (Boolean.TRUE.equals(getInstance().autoBulkParams) && Flag.ALLOW_BULK_LOG_REQUEST.isSet()) {
+                                            getInstance().bulkSize = Math.min(getInstance().maxBulkSize, 40);
+                                            getInstance().bulkDispatch = true;
+                                        }
                                         getInstance().connected = true;
                                         try {
                                             getInstance().tokenClient.connect(getInstance().host, getInstance().tokenPort, new ResponseHandler("tokenClient.reconnect") {
@@ -467,12 +468,12 @@ public class Residue {
         public abstract void handle(String data, boolean hasError);
 
         public void logForDebugging() {
-            ResidueUtils.debugLog("ResponseHandler::handle " + this.id);
+            //ResidueUtils.debugLog("ResponseHandler::handle " + this.id);
         }
 
         public void logForDebugging(final String data) {
             logForDebugging();
-            ResidueUtils.debugLog("ResponseHandler::handle::data = " + data);
+            //ResidueUtils.debugLog("ResponseHandler::handle::data = " + data);
         }
 
         @Override
@@ -595,10 +596,10 @@ public class Residue {
                             @Override
                             public void failed(Throwable exc, AsynchronousSocketChannel channel) {
                                 ResidueUtils.log(exc.getMessage());
-								if ("Connection reset by peer".equals(exc.getMessage())) {
-									isConnected = false;
-									getInstance().connected = false;
-								}
+                                if ("Connection reset by peer".equals(exc.getMessage())) {
+                                    isConnected = false;
+                                    getInstance().connected = false;
+                                }
                                 responseHandler.handle(exc.getMessage(), true);
                             }
 
@@ -965,20 +966,19 @@ public class Residue {
     }
 
     private Thread dispatcher = new Thread(new Runnable() {
-        public void run()
-        {
+        public void run() {
             while (true) {
                 if (!backlog.isEmpty()) {
-					if (isConnecting()) {
-						ResidueUtils.log("Still connecting...");
+                    if (isConnecting()) {
+                        ResidueUtils.log("Still connecting...");
                         try {
                             Thread.sleep(500);
                         } catch (InterruptedException e) {
                             // Ignore
                         }
-						continue;
-					}
-					if (!isConnected()) {
+                        continue;
+                    }
+                    if (!isConnected()) {
                         try {
                             ResidueUtils.log("Trying to reconnect...");
                             connect(host, port);
@@ -990,8 +990,8 @@ public class Residue {
                         } catch (InterruptedException e) {
                             // Ignore
                         }
-						continue;
-					}
+                        continue;
+                    }
                     if (!isClientValid()) {
                         try {
                             ResidueUtils.log("Reconnecting...");
