@@ -19,6 +19,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.lang.Math;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousSocketChannel;
@@ -67,6 +68,9 @@ public class Residue {
     private Boolean utcTime;
     private Integer timeOffset;
 	private Integer dispatchDelay = 1;
+    private Boolean autoBulkParams = true;
+    private Boolean bulkDispatch;
+    private Integer bulkSize;
 
     private Map<String, String> accessCodeMap;
     private volatile Map<String, ResidueToken> tokens = new HashMap<>();
@@ -123,6 +127,10 @@ public class Residue {
 
     public void setTimeOffset(final Integer timeOffset) {
         this.timeOffset = timeOffset;
+    }
+
+    public void setAutoBulkParams(final Boolean autoBulkParams) {
+        this.autoBulkParams = autoBulkParams;
     }
 
     public void setDispatchDelay(final Integer dispatchDelay) {
@@ -334,6 +342,10 @@ public class Residue {
                                         getInstance().maxBulkSize = finalConnection.get("max_bulk_size").getAsInt();
                                         getInstance().serverFlags = finalConnection.get("flags").getAsInt();
                                         getInstance().dateCreated = new Date(finalConnection.get("date_created").getAsLong() * 1000);
+										if (getInstance().autoBulkParams && Flag.ALLOW_BULK_LOG_REQUEST.isSet()) {
+											getInstance().bulkSize = Math.max(getInstance().maxBulkSize, 40);
+											getInstance().bulkDispatch = true;
+										}
                                         getInstance().connected = true;
                                         try {
                                             getInstance().tokenClient.connect(getInstance().host, getInstance().tokenPort, new ResponseHandler("tokenClient.reconnect") {
@@ -947,10 +959,11 @@ public class Residue {
                         ResidueUtils.log("Touching...");
                         touch();
                     }
-                    JsonObject j;
+					JsonObject j;
                     synchronized (backlog) {
                         j = backlog.pop();
                     }
+					
                     if (j != null) {
                         String token = null;
                         String loggerId = j.get("logger").getAsString();
