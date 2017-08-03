@@ -42,6 +42,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.TimeZone;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.zip.DeflaterOutputStream;
 
 import javax.crypto.Cipher;
@@ -98,6 +99,7 @@ public class Residue {
 
     protected Residue() {
         this.connected = false;
+        this.connecting = false;
         this.utcTime = false;
         this.timeOffset = 0;
     }
@@ -108,6 +110,10 @@ public class Residue {
 
     public Boolean isConnected() {
         return connected;
+    }
+
+    public Boolean isConnecting() {
+        return connecting;
     }
 
     public void setAccessCodeMap(final Map<String, String> accessCodeMap) {
@@ -223,7 +229,7 @@ public class Residue {
      * @throws Exception If any exception is thrown
      */
     public static boolean connect(final String host, final Integer port) throws Exception {
-        ResidueUtils.log("reconnect()");
+        ResidueUtils.debugLog("reconnect()");
         getInstance().host = host;
         getInstance().port = port;
         getInstance().connecting = true;
@@ -278,8 +284,16 @@ public class Residue {
 
                     @Override
                     public void handle(String data, boolean hasError) {
-
                         logForDebugging();
+						if (hasError) {
+							ResidueUtils.log("Failed to connect, connection refused");
+					        getInstance().connecting = false;
+					        getInstance().connected = false;
+							latch.countDown();
+							latch.countDown();
+							latch.countDown();
+							return;
+						}
                         try {
                             byte[] decoded = ResidueUtils.base64Decode(data);
                             String s2 = ResidueUtils.decryptRSA(decoded, getInstance().privateKey);
@@ -362,16 +376,16 @@ public class Residue {
             }
         });
 
-        latch.await();
+        latch.await(10L, TimeUnit.SECONDS);
         if (getInstance().connected) {
             try {
                 if (!getInstance().dispatcher.isAlive()) {
                     getInstance().dispatcher.start();
                 } else {
-                    ResidueUtils.log("Dispatcher resumed!");
+                    ResidueUtils.debugLog("Dispatcher resumed!");
                 }
             } catch (Exception e) {
-                ResidueUtils.log("Unable to start dispatcher thread [" + e.getMessage() + "]");
+                ResidueUtils.log("ERROR: Unable to start dispatcher thread [" + e.getMessage() + "]");
             }
         }
         return getInstance().connected;
@@ -388,12 +402,12 @@ public class Residue {
         public abstract void handle(String data, boolean hasError);
 
         public void logForDebugging() {
-            ResidueUtils.log("ResponseHandler::handle " + this.id);
+            ResidueUtils.debugLog("ResponseHandler::handle " + this.id);
         }
 
         public void logForDebugging(final String data) {
             logForDebugging();
-            ResidueUtils.log("ResponseHandler::handle::data = " + data);
+            ResidueUtils.debugLog("ResponseHandler::handle::data = " + data);
         }
 
         @Override
@@ -519,6 +533,10 @@ public class Residue {
                             @Override
                             public void failed(Throwable exc, AsynchronousSocketChannel channel) {
                                 ResidueUtils.log(exc.getMessage());
+								if ("Connection reset by peer".equals(exc.getMessage())) {
+									isConnected = false;
+									getInstance().connected = false;
+								}
                                 responseHandler.handle(exc.getMessage(), true);
                             }
 
@@ -565,6 +583,10 @@ public class Residue {
 
         private static void log(Object msg) {
             System.out.println(msg);
+        }
+
+        private static void debugLog(Object msg) {
+            // System.out.println(msg);
         }
 
         private static PrivateKey getPemPrivateKey(String filename) throws Exception {
@@ -808,7 +830,7 @@ public class Residue {
                     latch.countDown();
                 }
             });
-            latch.await();
+            latch.await(10L, TimeUnit.SECONDS);
         }
 
     }
@@ -873,7 +895,7 @@ public class Residue {
             }
         });
         try {
-            latch.await();
+            latch.await(10L, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
             // ignore
         }
@@ -884,6 +906,29 @@ public class Residue {
         {
             while (true) {
                 if (!backlog.isEmpty()) {
+					if (isConnecting()) {
+						ResidueUtils.log("Still connecting...");
+                        try {
+                            Thread.sleep(500);
+                        } catch (InterruptedException e) {
+                            // Ignore
+                        }
+						continue;
+					}
+					if (!isConnected()) {
+                        try {
+                            ResidueUtils.log("Trying to reconnect...");
+                            connect(host, port);
+                        } catch (Exception e) {
+                            ResidueUtils.log("Unable to connect, " + e.getMessage() + "\nRetrying in 500ms");
+                        }
+                        try {
+                            Thread.sleep(500);
+                        } catch (InterruptedException e) {
+                            // Ignore
+                        }
+						continue;
+					}
                     if (!isClientValid()) {
                         try {
                             ResidueUtils.log("Reconnecting...");
@@ -959,48 +1004,44 @@ public class Residue {
     });
 
     private void log(String loggerId, String msg, LoggingLevels level, Integer vlevel) {
+        int baseIdx = 4;
+        final int stackItemIndex = level == LoggingLevels.VERBOSE && vlevel > 0 ? baseIdx : (baseIdx + 1);
+        final StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
+        StackTraceElement stackItem = null;
+        if (stackTrace != null && stackTrace.length > stackItemIndex) {
+            stackItem = Thread.currentThread().getStackTrace()[stackItemIndex];
+        }
 
-        if (getInstance().loggingClient.isConnected) {
-            int baseIdx = 4;
-            final int stackItemIndex = level == LoggingLevels.VERBOSE && vlevel > 0 ? baseIdx : (baseIdx + 1);
-            final StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
-            StackTraceElement stackItem = null;
-            if (stackTrace != null && stackTrace.length > stackItemIndex) {
-                stackItem = Thread.currentThread().getStackTrace()[stackItemIndex];
+        Calendar c = Calendar.getInstance();
+        if (Boolean.TRUE.equals(utcTime)) {
+            TimeZone timeZone = c.getTimeZone();
+            int offset = timeZone.getRawOffset();
+            if (timeZone.inDaylightTime(new Date())) {
+                offset = offset + timeZone.getDSTSavings();
             }
+            int offsetHrs = offset / 1000 / 60 / 60;
+            int offsetMins = offset / 1000 / 60 % 60;
 
-            Calendar c = Calendar.getInstance();
-            if (Boolean.TRUE.equals(utcTime)) {
-                TimeZone timeZone = c.getTimeZone();
-                int offset = timeZone.getRawOffset();
-                if (timeZone.inDaylightTime(new Date())) {
-                    offset = offset + timeZone.getDSTSavings();
-                }
-                int offsetHrs = offset / 1000 / 60 / 60;
-                int offsetMins = offset / 1000 / 60 % 60;
+            c.add(Calendar.HOUR_OF_DAY, -offsetHrs);
+            c.add(Calendar.MINUTE, -offsetMins);
+        }
+        if (timeOffset != null) {
+            c.add(Calendar.SECOND, timeOffset);
+        }
+        JsonObject j = new JsonObject();
+        j.addProperty("datetime", c.getTime().getTime());
+        j.addProperty("logger", loggerId);
+        j.addProperty("msg", msg);
+        j.addProperty("file", stackItem == null ? "" : stackItem.getFileName());
+        j.addProperty("line", stackItem == null ? 0 : stackItem.getLineNumber());
+        j.addProperty("app", applicationName);
+        j.addProperty("level", level.getValue());
+        j.addProperty("func", stackItem == null ? "" : stackItem.getMethodName());
+        j.addProperty("thread", Thread.currentThread().getName());
+        j.addProperty("vlevel", vlevel);
 
-                c.add(Calendar.HOUR_OF_DAY, -offsetHrs);
-                c.add(Calendar.MINUTE, -offsetMins);
-            }
-            if (timeOffset != null) {
-                c.add(Calendar.SECOND, timeOffset);
-            }
-            JsonObject j = new JsonObject();
-            j.addProperty("datetime", c.getTime().getTime());
-            j.addProperty("logger", loggerId);
-            j.addProperty("msg", msg);
-            j.addProperty("file", stackItem == null ? "" : stackItem.getFileName());
-            j.addProperty("line", stackItem == null ? 0 : stackItem.getLineNumber());
-            j.addProperty("app", applicationName);
-            j.addProperty("level", level.getValue());
-            j.addProperty("func", stackItem == null ? "" : stackItem.getMethodName());
-            j.addProperty("thread", Thread.currentThread().getName());
-            j.addProperty("vlevel", vlevel);
-
-            synchronized (backlog) {
-                backlog.add(j);
-            }
-
+        synchronized (backlog) {
+            backlog.add(j);
         }
     }
 
