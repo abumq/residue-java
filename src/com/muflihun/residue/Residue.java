@@ -1,6 +1,8 @@
 package com.muflihun.residue;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.muflihun.residue.thirdparty.android.util.Base64;
 
@@ -19,7 +21,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.lang.Math;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousSocketChannel;
@@ -39,8 +40,10 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.Deque;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 import java.util.TimeZone;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -65,12 +68,13 @@ public class Residue {
     private Integer tokenPort;
     private String applicationName;
     private Integer rsaKeySize = 2048;
-    private Boolean utcTime;
+    private Integer keySize = 128;
+    private Boolean utcTime = false;
     private Integer timeOffset;
 	private Integer dispatchDelay = 1;
     private Boolean autoBulkParams = true;
-    private Boolean bulkDispatch;
-    private Integer bulkSize;
+    private Boolean bulkDispatch = false;
+    private Integer bulkSize = 0;
 
     private Map<String, String> accessCodeMap;
     private volatile Map<String, ResidueToken> tokens = new HashMap<>();
@@ -95,6 +99,10 @@ public class Residue {
 
     private static Residue instance;
 
+    private Boolean isConnecting() {
+        return connecting;
+    }
+
     public static Residue getInstance() {
         if (instance == null) {
             instance = new Residue();
@@ -102,7 +110,7 @@ public class Residue {
         return instance;
     }
 
-    protected Residue() {
+    private Residue() {
         this.connected = false;
         this.connecting = false;
         this.utcTime = false;
@@ -115,10 +123,6 @@ public class Residue {
 
     public Boolean isConnected() {
         return connected;
-    }
-
-    public Boolean isConnecting() {
-        return connecting;
     }
 
     public void setAccessCodeMap(final Map<String, String> accessCodeMap) {
@@ -141,8 +145,31 @@ public class Residue {
         this.clientId = clientId;
     }
 
+    /**
+     * Applicable to unknown clients only. Known clients already have public key on the server
+     *
+     * Accepted values are 1024, 2048, 4096
+     *
+     * @throws IllegalArgumentException if invalid key size is provided
+     */
     public void setRsaKeySize(final Integer rsaKeySize) {
+        if (rsaKeySize == 0 || rsaKeySize % 1024 != 0) {
+            throw new IllegalArgumentException("Accepted RSA key sizes are 1024, 2048, 4096");
+        }
         this.rsaKeySize = rsaKeySize;
+    }
+
+    /**
+     * Only change this if you know the client can support any bigger keys
+     * Accepted values are 128, 192 and 256
+     *
+     * @throws IllegalArgumentException if invalid key size is provided
+     */
+    public void setKeySize(final Integer keySize) throws IllegalArgumentException {
+        if (keySize != 128 && keySize != 192 && keySize != 256) {
+            throw new IllegalArgumentException("Accepted key sizes are 128, 192 and 256");
+        }
+        this.keySize = keySize;
     }
 
     public void setPrivateKeyFilename(final String privateKeyFilename) {
@@ -250,8 +277,6 @@ public class Residue {
         getInstance().connectionClient.destroy();
         getInstance().tokenClient.destroy();
         getInstance().loggingClient.destroy();
-
-        final Map<String, String> accessCodeMap = getInstance().accessCodeMap;
         getInstance().tokens.clear();
 
         final CountDownLatch latch = new CountDownLatch(3); // 3 connection sockets
@@ -268,7 +293,7 @@ public class Residue {
                 JsonObject j = new JsonObject();
                 j.addProperty("_t", ResidueUtils.getTimestamp());
                 j.addProperty("type", ConnectType.CONNECT.getValue());
-                j.addProperty("key_size", 128);
+                j.addProperty("key_size", getInstance().keySize);
                 if (getInstance().clientId != null
                         && !getInstance().clientId.isEmpty()
                         && getInstance().privateKeyFilename != null
@@ -342,8 +367,8 @@ public class Residue {
                                         getInstance().maxBulkSize = finalConnection.get("max_bulk_size").getAsInt();
                                         getInstance().serverFlags = finalConnection.get("flags").getAsInt();
                                         getInstance().dateCreated = new Date(finalConnection.get("date_created").getAsLong() * 1000);
-										if (getInstance().autoBulkParams && Flag.ALLOW_BULK_LOG_REQUEST.isSet()) {
-											getInstance().bulkSize = Math.max(getInstance().maxBulkSize, 40);
+										if (Boolean.TRUE.equals(getInstance().autoBulkParams) && Flag.ALLOW_BULK_LOG_REQUEST.isSet()) {
+											getInstance().bulkSize = Math.min(getInstance().maxBulkSize, 40);
 											getInstance().bulkDispatch = true;
 										}
                                         getInstance().connected = true;
@@ -485,9 +510,6 @@ public class Residue {
         }
 
         public boolean isSet() {
-            if (!Residue.getInstance().connected) {
-                return false;
-            }
             return (Residue.getInstance().serverFlags & this.value) != 0;
         }
     }
@@ -580,6 +602,7 @@ public class Residue {
 
                 @Override
                 public void failed(Throwable exc, AsynchronousSocketChannel channel) {
+                    exc.printStackTrace();
                     read(responseHandler);
                 }
 
@@ -759,7 +782,6 @@ public class Residue {
 
             char[] out = new char[l << 1];
 
-            // two characters form the hex value.
             for (int i = 0, j = 0; i < l; i++) {
                 out[j++] = HEX_DIGITS[(0xF0 & bytes[i]) >>> 4];
                 out[j++] = HEX_DIGITS[0x0F & bytes[i]];
@@ -778,7 +800,6 @@ public class Residue {
 
             byte[] out = new byte[len >> 1];
 
-            // two characters form the hex value.
             for (int i = 0, j = 0; j < len; i++) {
                 int f = Character.digit(data[j++], 16) << 4;
                 f = f | Character.digit(data[j++], 16);
@@ -817,7 +838,7 @@ public class Residue {
             j.addProperty("logger_id", loggerId);
             j.addProperty("access_code", accessCode);
             String request = new Gson().toJson(j);
-            ResidueUtils.log(request);
+            ResidueUtils.debugLog("Token request: " + request);
 
             String r = ResidueUtils.encrypt(request, key);
             tokenClient.send(r, new ResponseHandler("tokenClient.send") {
@@ -933,6 +954,7 @@ public class Residue {
 						continue;
 					}
 					if (!isConnected()) {
+                        // TODO: doesnt work for android
                         try {
                             ResidueUtils.log("Trying to reconnect...");
                             connect(host, port);
@@ -959,17 +981,28 @@ public class Residue {
                         ResidueUtils.log("Touching...");
                         touch();
                     }
-					JsonObject j;
+                    Integer totalRequests = Boolean.TRUE.equals(bulkDispatch) ? bulkSize : 1;
+                    totalRequests = Math.min(totalRequests, backlog.size());
+
+                    JsonArray bulkJ = new JsonArray();
+                    Set<String> loggerIds = new HashSet<>();
+                    Map<String, String> tokenList = new HashMap<>();
+
                     synchronized (backlog) {
-                        j = backlog.pop();
+                        for (Integer i = 0; i < totalRequests; ++i) {
+                            JsonObject j;
+                            j = backlog.pop();
+                            if (j != null) {
+                                loggerIds.add(j.get("logger").getAsString());
+                                bulkJ.add(j);
+                            }
+                        }
                     }
-					
-                    if (j != null) {
-                        String token = null;
-                        String loggerId = j.get("logger").getAsString();
+
+                    for (String loggerId : loggerIds) {
                         if (!hasValidToken(loggerId)) {
                             try {
-                                ResidueUtils.log("Obtaining new token");
+                                ResidueUtils.debugLog("Obtaining new token for [" + loggerId + "]");
                                 obtainToken(loggerId, null /* means read from map */);
                             } catch (Exception e) {
                                 // Ignore
@@ -979,42 +1012,49 @@ public class Residue {
                         ResidueToken tokenObj = tokens.get(loggerId);
                         if (tokenObj == null
                                 && (Flag.ALLOW_DEFAULT_ACCESS_CODE.isSet() || !Flag.CHECK_TOKENS.isSet())) {
-                            token = "";
+                            tokenList.put(loggerId, "");
                         } else if (tokenObj != null) {
-                            token = tokenObj.data;
-                        }
-                        if (token == null) {
-                            ResidueUtils.log("Failed to obtain token");
+                            tokenList.put(loggerId, tokenObj.data);
                         } else {
-                            if (!token.isEmpty()) { // empty token means token is not needed
-                                j.addProperty("token", token);
-                            }
-
-                            String request = new Gson().toJson(j);
-                            if (Flag.COMPRESSION.isSet()) {
-                                ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                                DeflaterOutputStream dos = new DeflaterOutputStream(baos);
-                                try {
-                                    dos.write(request.getBytes());
-                                    dos.flush();
-                                    dos.close();
-                                    request = ResidueUtils.base64Encode(baos.toByteArray());
-                                } catch (IOException e) {
-                                    ResidueUtils.log(e);
-                                }
-                            }
-                            String r = ResidueUtils.encrypt(request, key);
-                            getInstance().loggingClient.send(r, new ResponseHandler("loggingClient.send") {
-                                @Override
-                                public void handle(String data, boolean hasError) {
-                                }
-                            });
-                            try {
-                                Thread.sleep(dispatchDelay);
-                            } catch (InterruptedException e) {
-                                // Ignore
-                            }
+                            tokenList.put(loggerId, null); // token not found
                         }
+                    }
+                    for (JsonElement jElem : bulkJ) {
+                        JsonObject j = jElem.getAsJsonObject();
+                        String loggerId = j.get("logger").getAsString();
+                        String foundToken = tokenList.get(loggerId);
+                        if (foundToken == null) {
+                            ResidueUtils.log("ERROR: Failed to obtain token [" + loggerId + "]");
+                            continue;
+                        }
+                        if (!foundToken.isEmpty()) {
+                            j.addProperty("token", foundToken);
+                        }
+                    }
+
+                    String request = new Gson().toJson(Boolean.TRUE.equals(bulkDispatch) ? bulkJ : bulkJ.get(0));
+                    if (Flag.COMPRESSION.isSet()) {
+                        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                        DeflaterOutputStream dos = new DeflaterOutputStream(baos);
+                        try {
+                            dos.write(request.getBytes());
+                            dos.flush();
+                            dos.close();
+                            request = ResidueUtils.base64Encode(baos.toByteArray());
+                        } catch (IOException e) {
+                            ResidueUtils.log(e);
+                        }
+                    }
+                    String r = ResidueUtils.encrypt(request, key);
+                    getInstance().loggingClient.send(r, new ResponseHandler("loggingClient.send") {
+                        @Override
+                        public void handle(String data, boolean hasError) {
+                        }
+                    });
+                    try {
+                        Thread.sleep(dispatchDelay);
+                    } catch (InterruptedException e) {
+                        // Ignore
                     }
                 }
             }
