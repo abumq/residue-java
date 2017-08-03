@@ -50,7 +50,7 @@ import javax.crypto.spec.SecretKeySpec;
 
 public class Residue {
 
-    private static final Integer PING_THRESHOLD = 60;
+    private static final Integer TOUCH_THRESHOLD = 60;
     private static final String DEFAULT_ACCESS_CODE = "default";
 
     private final ResidueClient connectionClient = new ResidueClient();
@@ -405,7 +405,7 @@ public class Residue {
     private enum ConnectType {
         CONNECT(1),
         ACKNOWLEGEMENT(2),
-        PING(3);
+        TOUCH(3);
 
         private Integer value;
 
@@ -834,9 +834,9 @@ public class Residue {
         return new Date(((dateCreated.getTime() / 1000) + age) * 1000).after(new Date());
     }
 
-    private boolean shouldSendPing() {
+    private boolean shouldTouch() {
         if (!connected || connecting) {
-            // Can't send ping
+            // Can't send touch 
             return false;
         }
         if (age == 0) {
@@ -846,28 +846,28 @@ public class Residue {
         if (dateCreated == null) {
             return true;
         }
-        return age - ((new Date().getTime() / 1000) - (dateCreated.getTime() / 1000)) < PING_THRESHOLD;
+        return age - ((new Date().getTime() / 1000) - (dateCreated.getTime() / 1000)) < TOUCH_THRESHOLD;
     }
 
-    private void sendPing() {
+    private void touch() {
         final CountDownLatch latch = new CountDownLatch(1);
         JsonObject j = new JsonObject();
         j.addProperty("_t", ResidueUtils.getTimestamp());
-        j.addProperty("type", ConnectType.PING.getValue());
+        j.addProperty("type", ConnectType.TOUCH.getValue());
         j.addProperty("client_id", clientId);
         String request = new Gson().toJson(j);
 
         String r = ResidueUtils.encrypt(request, key);
 
-        connectionClient.send(r, new ResponseHandler("connectionClient.send-ping") {
+        connectionClient.send(r, new ResponseHandler("connectionClient.touch") {
             @Override
             public void handle(String data, boolean hasError) {
                 logForDebugging(data);
-                String pingResponseStr = ResidueUtils.decrypt(data, key);
-                JsonObject pingResponse = new Gson().fromJson(pingResponseStr, JsonObject.class);
-                if (pingResponse != null && pingResponse.get("status").getAsInt() == 0) {
-                    ResidueUtils.log("Updating client age via ping!");
-                    dateCreated = new Date(pingResponse.get("date_created").getAsLong() * 1000);
+                String touchResponseStr = ResidueUtils.decrypt(data, key);
+                JsonObject touchResponse = new Gson().fromJson(touchResponseStr, JsonObject.class);
+                if (touchResponse != null && touchResponse.get("status").getAsInt() == 0) {
+                    ResidueUtils.log("Updating client age via touch!");
+                    dateCreated = new Date(touchResponse.get("date_created").getAsLong() * 1000);
                 }
                 latch.countDown();
             }
@@ -893,9 +893,9 @@ public class Residue {
                             e.printStackTrace();
                         }
                     }
-                    if (shouldSendPing()) {
-                        ResidueUtils.log("Pinging...");
-                        sendPing();
+                    if (shouldTouch()) {
+                        ResidueUtils.log("Touching...");
+                        touch();
                     }
                     JsonObject j;
                     synchronized (backlog) {
@@ -961,7 +961,7 @@ public class Residue {
     private void log(String loggerId, String msg, LoggingLevels level, Integer vlevel) {
 
         if (getInstance().loggingClient.isConnected) {
-            int baseIdx = 5;
+            int baseIdx = 4;
             final int stackItemIndex = level == LoggingLevels.VERBOSE && vlevel > 0 ? baseIdx : (baseIdx + 1);
             final StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
             StackTraceElement stackItem = null;
