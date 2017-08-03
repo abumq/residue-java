@@ -66,6 +66,7 @@ public class Residue {
     private Integer rsaKeySize = 2048;
     private Boolean utcTime;
     private Integer timeOffset;
+	private Integer dispatchDelay = 1;
 
     private Map<String, String> accessCodeMap;
     private volatile Map<String, ResidueToken> tokens = new HashMap<>();
@@ -122,6 +123,10 @@ public class Residue {
 
     public void setTimeOffset(final Integer timeOffset) {
         this.timeOffset = timeOffset;
+    }
+
+    public void setDispatchDelay(final Integer dispatchDelay) {
+        this.dispatchDelay = dispatchDelay;
     }
 
     public void setClientId(final String clientId) {
@@ -992,7 +997,7 @@ public class Residue {
                                 }
                             });
                             try {
-                                Thread.sleep(1);
+                                Thread.sleep(dispatchDelay);
                             } catch (InterruptedException e) {
                                 // Ignore
                             }
