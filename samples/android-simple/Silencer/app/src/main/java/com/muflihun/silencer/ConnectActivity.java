@@ -27,11 +27,6 @@ public class ConnectActivity extends AppCompatActivity {
 
         r.setHost(hostText.getText().toString(), Integer.valueOf(portText.getText().toString()));
 
-        try {
-            r.loadConfigurationsFromJson("{ \"url\": \"localhost:8777\", \"access_codes\": [ { \"logger_id\": \"sample-app\", \"code\": \"a2dcb\" },{ \"logger_id\": \"default\", \"code\": \"blah\" } ], \"application_id\": \"com.muflihun.residue.sampleapp\", \"rsa_key_size\": 2048, \"utc_time\": false, \"time_offset\": 0, \"dispatch_delay\": 1, \"main_thread_id\": \"Main Thread\", \"server_public_key\": \"samples/clients/netcat/server-1024-public.pem\", \"client_id\": \"muflihun00102030\", \"client_private_key\": \"samples/clients/netcat/client-256-private.pem\" }");
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
         new ResidueConnectTask().execute();
     }
 
@@ -46,6 +41,16 @@ public class ConnectActivity extends AppCompatActivity {
         setContentView(R.layout.activity_connect);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+
+        final EditText portText = (EditText) findViewById(R.id.textPort);
+        final EditText hostText = (EditText) findViewById(R.id.textHost);
+
+        if (Residue.getInstance().getHost() != null) {
+            hostText.setText(Residue.getInstance().getHost());
+        }
+        if (Residue.getInstance().getPort() != null) {
+            portText.setText(Residue.getInstance().getPort().toString());
+        }
 
         Button btnReconnect = (Button) findViewById(R.id.btnReconnect);
         btnReconnect.setOnClickListener(new View.OnClickListener() {
