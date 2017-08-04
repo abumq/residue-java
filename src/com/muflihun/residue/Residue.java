@@ -151,6 +151,14 @@ public class Residue {
         this.timeOffset = timeOffset;
     }
 
+    /**
+     * Enables automatic setting of bulk parameters depending on
+     * what's most efficient. It essentially enables bulk if server supports
+     * it and sets bulk size and dispatch delay accordingly.
+     *
+     * note: You need re-connect using <pre>connect()</pre> helper method
+     * note: By default it is enabled
+     */
     public void setAutoBulkParams(final Boolean autoBulkParams) {
         this.autoBulkParams = autoBulkParams;
     }
@@ -204,6 +212,23 @@ public class Residue {
 
     public void setUtcTime(Boolean utcTime) {
         this.utcTime = utcTime;
+    }
+
+    /**
+     * Sets number of log messages to be bulked together
+     * This depends on what server accepts. The configuration value on the server is
+     * <a href='https://github.com/muflihun/residue/blob/master/docs/CONFIGURATION.md#max_items_in_bulk'>max_items_in_bulk</a>.
+     *
+     * @param bulkSize
+     * @throws IllegalArgumentException If already connected and you try to set size more than
+     * maximum allowed
+     * @see #setAutoBulkParams(Boolean)
+     */
+    public void setBulkSize(Integer bulkSize) throws IllegalArgumentException {
+        if (isConnected() && bulkSize > maxBulkSize) {
+            throw new IllegalArgumentException("Invalid bulk dispatch size. Maximum allowed: " + maxBulkSize);
+        }
+        this.bulkSize = bulkSize;
     }
 
     /**
@@ -394,6 +419,11 @@ public class Residue {
                                         if (Boolean.TRUE.equals(getInstance().autoBulkParams) && Flag.ALLOW_BULK_LOG_REQUEST.isSet()) {
                                             getInstance().bulkSize = Math.min(getInstance().maxBulkSize, 40);
                                             getInstance().bulkDispatch = true;
+                                        }
+                                        if (Boolean.TRUE.equals(getInstance().bulkDispatch) && Flag.ALLOW_BULK_LOG_REQUEST.isSet() && getInstance().bulkSize > getInstance().maxBulkSize) {
+                                            getInstance().bulkSize = getInstance().maxBulkSize;
+                                        } else if (Boolean.TRUE.equals(getInstance().bulkDispatch) && !Flag.ALLOW_BULK_LOG_REQUEST.isSet()) {
+                                            getInstance().bulkDispatch = false;
                                         }
                                         getInstance().connected = true;
                                         try {
