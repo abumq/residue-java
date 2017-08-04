@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.reflect.TypeToken;
 import com.muflihun.residue.thirdparty.android.util.Base64;
 
 import org.bouncycastle.asn1.ASN1EncodableVector;
@@ -21,12 +22,16 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Type;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.CompletionHandler;
 import java.nio.channels.NotYetConnectedException;
 import java.nio.channels.ReadPendingException;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -41,6 +46,7 @@ import java.util.Date;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
@@ -86,11 +92,13 @@ public class Residue {
     private Integer timeOffset;
     private Integer dispatchDelay = 1;
     private Boolean autoBulkParams = true;
+    private Boolean plainRequest = false;
     private Boolean bulkDispatch = false;
     private Integer bulkSize = 0;
 
     private Map<String, String> accessCodeMap;
 
+    private String privateKeySecret;
     private String privateKeyFilename;
     private PrivateKey privateKey;
 
@@ -202,6 +210,14 @@ public class Residue {
         this.privateKeyFilename = privateKeyFilename;
     }
 
+    public void setPrivateKeySecret(final String privateKeySecret) {
+        this.privateKeySecret = privateKeySecret;
+    }
+
+    public void setPlainRequest(final Boolean plainRequest) {
+        this.plainRequest = plainRequest;
+    }
+
     public void setServerKeyFilename(final String serverKeyFilename) {
         this.serverKeyFilename = serverKeyFilename;
     }
@@ -212,6 +228,97 @@ public class Residue {
 
     public void setUtcTime(Boolean utcTime) {
         this.utcTime = utcTime;
+    }
+
+    public synchronized void loadConfigurations(final String jsonFilename) throws Exception {
+        byte[] encoded = Files.readAllBytes(Paths.get(jsonFilename));
+        String json = new String(encoded, Charset.defaultCharset());
+        loadConfigurationsFromJson(json);
+    }
+
+    public synchronized void loadConfigurationsFromJson(final String json) throws Exception {
+        JsonObject jsonObject = new Gson().fromJson(json, JsonObject.class);
+        if (jsonObject.has("url")) {
+            String[] parts = jsonObject.get("url").getAsString().split(":");
+            if (parts.length == 2) {
+                Integer port = Integer.parseInt(parts[1]);
+                setHost(parts[0], port);
+            }
+        } else {
+            throw new Exception("URL should be in format of <host>:<port>");
+        }
+
+        if (jsonObject.has("application_id")) {
+            setApplicationName(jsonObject.get("application_id").getAsString());
+        }
+
+        if (jsonObject.has("utc_time")) {
+            setUtcTime(jsonObject.get("utc_time").getAsBoolean());
+        }
+
+        if (jsonObject.has("time_offset")) {
+            setTimeOffset(jsonObject.get("time_offset").getAsInt());
+        }
+
+        if (jsonObject.has("rsa_key_size")) {
+            setRsaKeySize(jsonObject.get("rsa_key_size").getAsInt());
+        }
+
+        if (jsonObject.has("dispatch_delay")) {
+            setDispatchDelay(jsonObject.get("dispatch_delay").getAsInt());
+        }
+
+        if (jsonObject.has("key_size")) {
+            setKeySize(jsonObject.get("key_size").getAsInt());
+        }
+
+        if (jsonObject.has("main_thread_id")) {
+            Thread.currentThread().setName(jsonObject.get("main_thread_id").getAsString());
+        }
+
+        if (jsonObject.has("plain_request")) {
+            setPlainRequest(jsonObject.get("plain_request").getAsBoolean());
+        }
+
+        if (jsonObject.has("access_codes")) {
+            Type type = new TypeToken<List<Map<String, String>>>(){}.getType();
+
+            Map<String, String> newMap = new HashMap<>();
+            List<Map<String, String>> accessCodes = new Gson().fromJson(jsonObject.getAsJsonArray("access_codes"), type);
+            for (Map<String, String> accessCodeMap : accessCodes) {
+                String loggerId = "";
+                String code = "";
+                for (String key : accessCodeMap.keySet()) {
+                    if ("logger_id".equals(key)) {
+                        loggerId = accessCodeMap.get(key);
+                    } else if ("code".equals(key)) {
+                        code = accessCodeMap.get(key);
+                    }
+                }
+                if (!loggerId.isEmpty() && !code.isEmpty()) {
+                    newMap.put(loggerId, code);
+                }
+            }
+            setAccessCodeMap(newMap);
+
+        }
+
+        if (jsonObject.has("server_public_key")) {
+            setServerKeyFilename(jsonObject.get("server_public_key").getAsString());
+        }
+
+        if (jsonObject.has("client_id")) {
+            setClientId(jsonObject.get("client_id").getAsString());
+        }
+
+        if (jsonObject.has("client_private_key")) {
+
+            setPrivateKeyFilename(jsonObject.get("client_private_key").getAsString());
+
+            if (jsonObject.has("client_key_secret")) {
+                setPrivateKeySecret(jsonObject.get("client_key_secret").getAsString());
+            }
+        }
     }
 
     /**
@@ -1102,7 +1209,8 @@ public class Residue {
                             ResidueUtils.log(e);
                         }
                     }
-                    String r = ResidueUtils.encrypt(request, key);
+                    String r = Boolean.TRUE.equals(plainRequest)
+                            && Flag.ALLOW_PLAIN_LOG_REQUEST.isSet() ? request : ResidueUtils.encrypt(request, key);
                     getInstance().loggingClient.send(r, new ResponseHandler("loggingClient.send") {
                         @Override
                         public void handle(String data, boolean hasError) {
