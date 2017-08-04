@@ -12,6 +12,7 @@ class Minimal {
                 put("sample-app", "eif89");
             }});
             r.setApplicationName("Sample ResidueJ App");
+			r.loadConfigurations("/Users/mkhan/Projects/residue-java/simple-sample/client.conf2.json");
 
             if (r.connect("localhost", 8777)) {
                 System.out.println("successfully connected");

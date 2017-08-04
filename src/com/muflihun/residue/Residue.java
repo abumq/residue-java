@@ -32,6 +32,7 @@ import java.nio.channels.ReadPendingException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.security.Key;
 import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -56,7 +57,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.zip.DeflaterOutputStream;
 
 import javax.crypto.Cipher;
+import javax.crypto.EncryptedPrivateKeyInfo;
+import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 
 /**
@@ -440,7 +444,7 @@ public class Residue {
         if (getInstance().clientId != null && !getInstance().clientId.isEmpty()
                 && getInstance().privateKeyFilename != null
                 && !getInstance().privateKeyFilename.isEmpty()) {
-            getInstance().privateKey = ResidueUtils.getPemPrivateKey(getInstance().privateKeyFilename);
+            getInstance().privateKey = ResidueUtils.getPemPrivateKey(getInstance().privateKeyFilename, getInstance().privateKeySecret);
         }
 
         getInstance().connectionClient.connect(getInstance().host, getInstance().port, new ResponseHandler("connectionClient.reconnect") {
@@ -790,7 +794,7 @@ public class Residue {
             System.out.println(msg);
         }
 
-        private static PrivateKey getPemPrivateKey(String filename) throws Exception {
+        private static PrivateKey getPemPrivateKey(String filename, String secret) throws Exception {
             File f = new File(filename);
             FileInputStream fis = new FileInputStream(f);
             DataInputStream dis = new DataInputStream(fis);
@@ -809,16 +813,26 @@ public class Residue {
             ASN1EncodableVector v = new ASN1EncodableVector();
             v.add(new ASN1Integer(0));
             ASN1EncodableVector v2 = new ASN1EncodableVector();
-            v2.add(new ASN1ObjectIdentifier(PKCSObjectIdentifiers.rsaEncryption.getId()));
+            ASN1ObjectIdentifier objectIdentifier = new ASN1ObjectIdentifier(PKCSObjectIdentifiers.rsaEncryption.getId());
+            v2.add(objectIdentifier);
             v2.add(DERNull.INSTANCE);
             v.add(new DERSequence(v2));
             v.add(new DEROctetString(decoded));
             ASN1Sequence seq = new DERSequence(v);
             byte[] privKey = seq.getEncoded("DER");
 
-            PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(privKey);
+            PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(privKey);
             KeyFactory kf = KeyFactory.getInstance("RSA");
-            return kf.generatePrivate(spec);
+
+            if (secret != null && !secret.isEmpty()) {
+                // FIXME: Encrypted private keys not working
+                PBEKeySpec pbeSpec = new PBEKeySpec(secret.toCharArray());
+                EncryptedPrivateKeyInfo pkinfo = new EncryptedPrivateKeyInfo(keySpec.getEncoded());
+                SecretKeyFactory skf = SecretKeyFactory.getInstance(pkinfo.getAlgName());
+                Key secretKey = skf.generateSecret(pbeSpec);
+                keySpec = pkinfo.getKeySpec(secretKey);
+            }
+            return kf.generatePrivate(keySpec);
         }
 
         private static PublicKey getPemPublicKey(String filename) throws Exception {
