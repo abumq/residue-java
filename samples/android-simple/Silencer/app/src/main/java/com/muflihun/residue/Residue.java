@@ -1169,6 +1169,10 @@ public class Residue {
                             j = backlog.pop();
                             if (j != null) {
                                 loggerIds.add(j.get("logger").getAsString());
+                                if (Boolean.TRUE.equals(plainRequest)
+                                        && Flag.ALLOW_PLAIN_LOG_REQUEST.isSet()) {
+                                    j.addProperty("client_id", clientId);
+                                }
                                 bulkJ.add(j);
                             }
                         }

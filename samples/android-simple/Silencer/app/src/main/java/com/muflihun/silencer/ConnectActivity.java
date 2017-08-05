@@ -26,6 +26,8 @@ public class ConnectActivity extends AppCompatActivity {
         }});
 
         r.setHost(hostText.getText().toString(), Integer.valueOf(portText.getText().toString()));
+        r.setUtcTime(true);
+        r.setPlainRequest(true);
 
         new ResidueConnectTask().execute();
     }
