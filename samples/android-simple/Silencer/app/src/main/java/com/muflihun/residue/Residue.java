@@ -494,6 +494,16 @@ public class Residue {
                             return;
                         }
                         try {
+                            if (!data.isEmpty() && data.substring(1, 1) == "{") {
+                                // error?
+
+                                ResidueUtils.log("Failed to connect. Error response: " + data);
+                                getInstance().connecting = false;
+                                getInstance().connected = false;
+                                latch.countDown();
+                                latch.countDown();
+                                latch.countDown();
+                            }
                             byte[] decoded = ResidueUtils.base64Decode(data);
                             String s2 = ResidueUtils.decryptRSA(decoded, getInstance().privateKey);
                             int pos = s2.indexOf("{\"ack\"");

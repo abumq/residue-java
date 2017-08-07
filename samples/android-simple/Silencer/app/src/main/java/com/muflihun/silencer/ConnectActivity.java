@@ -22,7 +22,7 @@ public class ConnectActivity extends AppCompatActivity {
         System.out.println("reconnect()...");
 
         r.setAccessCodeMap(new HashMap<String, String>() {{
-            put("sample-app", "eif89");
+            put("sample-app", "a2dcb");
         }});
 
         r.setHost(hostText.getText().toString(), Integer.valueOf(portText.getText().toString()));

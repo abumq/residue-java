@@ -7,6 +7,7 @@
 
 ### Fixed
 - Issue with plain log requests fixed
+- Issue with error connection
 
 ## [1.0.0-beta.1]
 ### Changes
