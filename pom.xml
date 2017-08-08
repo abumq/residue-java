@@ -1,0 +1,42 @@
+<!--
+
+ POM.xml file IS NOT READY
+ We're still working on it
+-->
+
+<project>
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.muflihun</groupId>
+  <artifactId>residue</artifactId>
+  <version>1.0.0-beta.2</version>
+  <packaging>jar</packaging>
+ 
+  <name>Residue</name>
+  <description>Java library to interact with residue seamlessly.</description>
+  <url>https://muflihun.github.io/residue</url>
+ 
+  <licenses>
+    <license>
+      <name>Apache License, Version 2.0</name>
+      <url>https://github.com/muflihun/residue-java/blob/master/LICENCE</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+ 
+  <scm>
+    <url>https://github.com/muflihun/residue-java/</url>
+  </scm>
+ 
+  <dependencies>
+	<dependency>
+	    <groupId>com.google.code.gson</groupId>
+	    <artifactId>gson</artifactId>
+	    <version>2.6.2</version>
+	</dependency>
+	<dependency>
+	    <groupId>org.bouncycastle</groupId>
+	    <artifactId>bcpg-jdk15on</artifactId>
+	    <version>1.56</version>
+	</dependency>
+  </dependencies>
+</project>

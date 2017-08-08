@@ -4,7 +4,7 @@
 
 ## Dependencies
 
- * [BouncyCastle](http://www.bouncycastle.org/)
+ * [BouncyCastle](http://www.bouncycastle.org/) 1.56+
  * [Gson](https://github.com/google/gson) v2.6.2+
 
 ### Download Dependencies

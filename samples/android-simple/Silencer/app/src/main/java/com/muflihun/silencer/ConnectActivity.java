@@ -22,10 +22,13 @@ public class ConnectActivity extends AppCompatActivity {
         System.out.println("reconnect()...");
 
         r.setAccessCodeMap(new HashMap<String, String>() {{
-            put("sample-app", "eif89");
+            put("sample-app", "a2dcb");
         }});
 
         r.setHost(hostText.getText().toString(), Integer.valueOf(portText.getText().toString()));
+        r.setUtcTime(true);
+        r.setPlainRequest(true);
+
         new ResidueConnectTask().execute();
     }
 
@@ -40,6 +43,16 @@ public class ConnectActivity extends AppCompatActivity {
         setContentView(R.layout.activity_connect);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+
+        final EditText portText = (EditText) findViewById(R.id.textPort);
+        final EditText hostText = (EditText) findViewById(R.id.textHost);
+
+        if (Residue.getInstance().getHost() != null) {
+            hostText.setText(Residue.getInstance().getHost());
+        }
+        if (Residue.getInstance().getPort() != null) {
+            portText.setText(Residue.getInstance().getPort().toString());
+        }
 
         Button btnReconnect = (Button) findViewById(R.id.btnReconnect);
         btnReconnect.setOnClickListener(new View.OnClickListener() {
