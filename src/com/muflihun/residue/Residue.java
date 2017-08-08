@@ -94,6 +94,7 @@ public class Residue {
     private Integer keySize = 128;
     private Boolean utcTime = false;
     private Integer timeOffset;
+	private Boolean useTimeOffsetIfNotUtc;
     private Integer dispatchDelay = 1;
     private Boolean autoBulkParams = true;
     private Boolean plainRequest = false;
@@ -137,6 +138,7 @@ public class Residue {
         this.connecting = false;
         this.utcTime = false;
         this.timeOffset = 0;
+		this.useTimeOffsetIfNotUtc = false;
     }
 
     public String getHost() {
@@ -232,6 +234,16 @@ public class Residue {
 
     public void setUtcTime(Boolean utcTime) {
         this.utcTime = utcTime;
+    }
+
+	/**
+	 * If this is true the timeOffset will only take affect if the
+	 * current timezone is NOT UTC.
+     *
+     * You must enable utcTime with this
+     */
+    public void setUseTimeOffsetIfNotUtc(Boolean useTimeOffsetIfNotUtc) {
+        this.useTimeOffsetIfNotUtc = useTimeOffsetIfNotUtc;
     }
 
     public synchronized void loadConfigurations(final String jsonFilename) throws Exception {
@@ -1279,22 +1291,31 @@ public class Residue {
                 break;
             }
         }
-
+		Boolean isNonUTC = false;
         Calendar c = Calendar.getInstance();
         if (Boolean.TRUE.equals(utcTime)) {
             TimeZone timeZone = c.getTimeZone();
             int offset = timeZone.getRawOffset();
+						
             if (timeZone.inDaylightTime(new Date())) {
                 offset = offset + timeZone.getDSTSavings();
             }
+			
             int offsetHrs = offset / 1000 / 60 / 60;
             int offsetMins = offset / 1000 / 60 % 60;
-
-            c.add(Calendar.HOUR_OF_DAY, -offsetHrs);
-            c.add(Calendar.MINUTE, -offsetMins);
+			
+			if (offsetHrs != 0 || offsetMins != 0) { // already utc
+	            c.add(Calendar.HOUR_OF_DAY, -offsetHrs);
+	            c.add(Calendar.MINUTE, -offsetMins);
+				isNonUTC = true;
+			}
         }
         if (timeOffset != null) {
-            c.add(Calendar.SECOND, timeOffset);
+			if (useTimeOffsetIfNotUtc && isNonUTC) {
+				c.add(Calendar.SECOND, timeOffset);
+			} else if (!useTimeOffsetIfNotUtc) {
+            	c.add(Calendar.SECOND, timeOffset);
+			}
         }
         JsonObject j = new JsonObject();
         j.addProperty("datetime", c.getTime().getTime());

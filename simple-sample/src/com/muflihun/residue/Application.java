@@ -14,8 +14,9 @@ class Application {
             //r.setPrivateKeyFilename("/Users/majid.khan/Projects/residue/samples/clients/netcat/client-256-private.pem");
             //r.setServerKeyFilename("/Users/majid.khan/Projects/residue/samples/clients/netcat/server-1024-public.pem");
             r.setApplicationName("Sample ResidueJ App");
-            // r.setUtcTime(true);
-            r.setTimeOffset(-3600);
+            r.setUtcTime(true);
+            r.setUseTimeOffsetIfNotUtc(true);
+            r.setTimeOffset(36000);
 
             if (r.connect("localhost", 8777)) {
                 System.out.println("successfully connected");
