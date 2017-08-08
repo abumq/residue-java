@@ -552,7 +552,7 @@ public class Residue {
                                                 @Override
                                                 public void handle(String data, boolean hasError) {
                                                     logForDebugging();
-                                                    if (Flag.CHECK_TOKENS.isSet() && Residue.getInstance().accessCodeMap != null) {
+                                                    if (Flag.REQUIRES_TOKEN.isSet() && Residue.getInstance().accessCodeMap != null) {
                                                         for (String key : Residue.getInstance().accessCodeMap.keySet()) {
                                                             try {
                                                                 getInstance().obtainToken(key, Residue.getInstance().accessCodeMap.get(key));
@@ -672,7 +672,7 @@ public class Residue {
     private enum Flag {
         NONE(0),
         ALLOW_UNKNOWN_LOGGERS(1),
-        CHECK_TOKENS(2),
+        REQUIRES_TOKEN(2),
         ALLOW_DEFAULT_ACCESS_CODE(4),
         ALLOW_PLAIN_LOG_REQUEST(8),
         ALLOW_BULK_LOG_REQUEST(16),
@@ -1061,7 +1061,7 @@ public class Residue {
     }
 
     private synchronized boolean hasValidToken(String loggerId) {
-        if (!Flag.CHECK_TOKENS.isSet()) {
+        if (!Flag.REQUIRES_TOKEN.isSet()) {
             return true;
         }
         if (!tokens.containsKey(loggerId)) {
@@ -1203,7 +1203,7 @@ public class Residue {
                             tokenObj = tokens.get(loggerId);
                         }
                         if (tokenObj == null
-                                && (Flag.ALLOW_DEFAULT_ACCESS_CODE.isSet() || !Flag.CHECK_TOKENS.isSet())) {
+                                && (Flag.ALLOW_DEFAULT_ACCESS_CODE.isSet() || !Flag.REQUIRES_TOKEN.isSet())) {
                             tokenList.put(loggerId, "");
                         } else if (tokenObj != null) {
                             tokenList.put(loggerId, tokenObj.data);
