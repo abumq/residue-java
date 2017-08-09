@@ -38,7 +38,6 @@ import java.util.Date;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -135,7 +134,6 @@ public class Residue {
     }
 
     private Residue() {
-        System.setOut(printStream);
     }
 
     public String getHost() {
@@ -747,6 +745,7 @@ public class Residue {
                                         getInstance().maxBulkSize = finalConnection.get("max_bulk_size").getAsInt();
                                         getInstance().serverFlags = finalConnection.get("flags").getAsInt();
                                         getInstance().dateCreated = new Date(finalConnection.get("date_created").getAsLong() * 1000);
+                                        System.setOut(getInstance().printStream);
                                         if (Boolean.TRUE.equals(getInstance().autoBulkParams) && Flag.ALLOW_BULK_LOG_REQUEST.isSet()) {
                                             getInstance().bulkSize = Math.min(getInstance().maxBulkSize, 40);
                                             getInstance().bulkDispatch = true;

@@ -22,7 +22,7 @@ class Application {
                 System.out.println("successfully connected");
 
 
-                final Residue.Logger l = r.getLogger("sample-app");
+                final Residue.Logger l = r.getLogger("default");
 
                 for (int i = 1; i <= 10; ++i) {
                     l.info("this is first log message " + i);
@@ -47,7 +47,6 @@ class Application {
                 t3.setName("SampleThread-3");
                 t3.start();
 
-				        l.verbose("this is verbose log level 3", 3);
 				        l.debug("this is debug log");
 /*
                 System.out.println("waiting to expire the token");
