@@ -1,3 +1,23 @@
+/**
+ * Copyright (C) 2017 Muflihun Labs
+ *
+ * https://muflihun.com
+ * https://muflihun.github.io/residue
+ * https://github.com/muflihun/residue-java
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.muflihun.residue;
 
 import javax.crypto.Cipher;
@@ -62,7 +82,7 @@ import org.bouncycastle.asn1.DERSequence;
 import org.bouncycastle.asn1.pkcs.PKCSObjectIdentifiers;
 
 /**
- * Provides logging interface for interacting with residue server seamlessly
+ * Provides residue interface for interacting with residue server seamlessly and sending the log messages
  * <p>
  * For the functions that do not have documentation, please refer to C++ library's documentation,
  * all the concepts and naming conventions are same for all the official residue client libraries
@@ -561,7 +581,7 @@ public class Residue {
 
         final String STREAM_LOGGER_ID = "default";
 
-        public ResiduePrintStream(PrintStream org) {
+        private ResiduePrintStream(PrintStream org) {
             super(org);
         }
 
@@ -710,15 +730,16 @@ public class Residue {
                                 latch.countDown();
                                 latch.countDown();
                             }
+
                             byte[] decoded = ResidueUtils.base64Decode(data);
                             String s2 = ResidueUtils.decryptRSA(decoded, getInstance().privateKey);
                             if (s2 != null) {
-                                int pos = s2.indexOf("{\"ack\"");
+                                int pos = s2.indexOf("{\"ack\""); // decryption issue on android
                                 if (pos == -1) {
                                     ResidueUtils.log("Pos == -1");
                                     return;
                                 }
-                                s2 = s2.substring(pos); // FIXME: Fix this decryption! // TODO: FOR_ANDROID
+                                s2 = s2.substring(pos);
                             }
                             JsonObject nonAckResponse = new Gson().fromJson(s2, JsonObject.class);
 
@@ -804,6 +825,7 @@ public class Residue {
         });
 
         latch.await(10L, TimeUnit.SECONDS);
+
         if (getInstance().connected) {
             try {
                 if (!getInstance().dispatcher.isAlive()) {
@@ -1342,17 +1364,27 @@ public class Residue {
 
     private Thread dispatcher = new Thread(new Runnable() {
         public void run() {
+            Integer reconnectingAttempts = 0; // don't use Timer as we want to schedule it once
             while (true) {
                 if (!backlog.isEmpty()) {
                     if (isConnecting()) {
-                        ResidueUtils.log("Still connecting...");
-                        try {
-                            Thread.sleep(500);
-                        } catch (InterruptedException e) {
-                            // Ignore
+                        ResidueUtils.debugLog("Still connecting...");
+                        if (reconnectingAttempts >= 20) { // 10 seconds
+                            connecting = false;
+                            connected = false;
+                            reconnectingAttempts = 0; // reset
+                            // fallthrough to next condition to ensure we start from scratch the re-connection
+                        } else {
+                            try {
+                                Thread.sleep(500);
+                                reconnectingAttempts++;
+                            } catch (InterruptedException e) {
+                                // Ignore
+                            }
                         }
                         continue;
                     }
+
                     if (!isConnected()) {
                         try {
                             ResidueUtils.log("Trying to reconnect...");
@@ -1367,26 +1399,30 @@ public class Residue {
                         }
                         continue;
                     }
+
                     if (!isClientValid()) {
                         try {
-                            ResidueUtils.log("Reconnecting...");
+                            ResidueUtils.log("Client expired, reconnecting...");
                             connect(host, port);
                         } catch (Exception e) {
                             // Unable to reconnect
                             e.printStackTrace();
                         }
                     }
+
                     if (shouldTouch()) {
                         ResidueUtils.log("Touching...");
                         touch();
                     }
+
                     Integer totalRequests = Boolean.TRUE.equals(bulkDispatch) ? bulkSize : 1;
                     totalRequests = Math.min(totalRequests, backlog.size());
 
-                    JsonArray bulkJ = new JsonArray();
-                    Set<String> loggerIds = new HashSet<>();
-                    Map<String, String> tokenList = new HashMap<>();
+                    final JsonArray bulkJ = new JsonArray();
+                    final Set<String> loggerIds = new HashSet<>();
+                    final Map<String, String> tokenList = new HashMap<>();
 
+                    // build up bulk request
                     synchronized (backlog) {
                         for (Integer i = 0; i < totalRequests; ++i) {
                             JsonObject j;
@@ -1402,6 +1438,7 @@ public class Residue {
                         }
                     }
 
+                    // Obtain tokens for all the loggers (unique)
                     for (String loggerId : loggerIds) {
                         if (!hasValidToken(loggerId)) {
                             try {
@@ -1425,6 +1462,8 @@ public class Residue {
                             tokenList.put(loggerId, null); // token not found
                         }
                     }
+
+                    // Integrate token to the request
                     for (JsonElement jElem : bulkJ) {
                         JsonObject j = jElem.getAsJsonObject();
                         String loggerId = j.get("logger").getAsString();
@@ -1448,7 +1487,7 @@ public class Residue {
                             dos.close();
                             request = ResidueUtils.base64Encode(baos.toByteArray());
                         } catch (IOException e) {
-                            ResidueUtils.log(e);
+                            ResidueUtils.log("Failed to compress: " + e.getMessage());
                         }
                     }
                     String r = Boolean.TRUE.equals(plainRequest)
