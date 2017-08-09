@@ -11,6 +11,7 @@ import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Type;
 import java.net.InetSocketAddress;
@@ -37,6 +38,7 @@ import java.util.Date;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -117,6 +119,7 @@ public class Residue {
     private Integer serverFlags;
     private Integer maxBulkSize;
     private volatile String lastError;
+    private PrintStream printStream = new ResiduePrintStream(System.out);
 
     private static Residue instance;
 
@@ -132,6 +135,7 @@ public class Residue {
     }
 
     private Residue() {
+        System.setOut(printStream);
     }
 
     public String getHost() {
@@ -363,82 +367,223 @@ public class Residue {
      * Logger class to send log messages to the server
      */
     public static class Logger {
+
         private String id;
 
         private Logger(String id) {
             this.id = id;
         }
 
-        public void info(Object msg) {
-            info(msg, null);
-        }
-
-        public void warning(Object msg) {
-            warning(msg, null);
-        }
-        public void warn(Object msg) {
-            warning(msg, null);
-        }
-
-        public void error(Object msg) {
-            error(msg, null);
-        }
-
-        public void err(Object msg) {
-            error(msg, null);
-        }
-
-        public void debug(Object msg) {
-            debug(msg, null);
-        }
-
-        public void fatal(Object msg) {
-            fatal(msg, null);
-        }
-
-        public void trace(Object msg) {
-            trace(msg, null);
-        }
-
-        public void verbose(Object msg) {
-            verbose(msg, null);
-        }
-
-        public void info(Object msg, Object obj) {
-            Residue.getInstance().log(id, msg, obj, LoggingLevels.INFO);
-        }
-
-        public void warning(Object msg, Object obj) {
-            Residue.getInstance().log(id, msg, obj, LoggingLevels.WARNING);
-        }
-
-        public void warn(Object msg, Object obj) {
-            warning(msg, obj);
-        }
-
-        public void error(Object msg, Object obj) {
-            Residue.getInstance().log(id, msg, obj, LoggingLevels.ERROR);
-        }
-
-        public void debug(Object msg, Object obj) {
-            Residue.getInstance().log(id, msg, obj, LoggingLevels.DEBUG);
-        }
-
-        public void fatal(Object msg, Object obj) {
-            Residue.getInstance().log(id, msg, obj, LoggingLevels.FATAL);
-        }
-
-        public void trace(Object msg, Object obj) {
-            Residue.getInstance().log(id, msg, obj, LoggingLevels.TRACE);
-        }
-
-        public void verbose(Object msg, Integer vlevel) {
-            Residue.getInstance().log(id, msg == null ? "NULL" : msg.toString(), LoggingLevels.VERBOSE, vlevel);
-        }
-
         public boolean isDebugEnabled() {
-            return Residue.getInstance().enableDebugging;
+            return true;
         }
+
+        public boolean isInfoEnabled() {
+            return true;
+        }
+
+        public boolean isWarnEnabled() {
+            return true;
+        }
+
+        public boolean isErrorEnabled() {
+            return true;
+        }
+
+        public void debug(Object obj) {
+            log(obj, LoggingLevels.DEBUG);
+        }
+
+        public void info(Object obj) {
+            log(obj, LoggingLevels.INFO);
+        }
+
+        public void error(Object obj) {
+            log(obj, LoggingLevels.ERROR);
+        }
+
+        public void warn(Object obj) {
+            log(obj, LoggingLevels.WARNING);
+        }
+
+        public void fatal(Object obj) {
+            log(obj, LoggingLevels.FATAL);
+        }
+
+        public void trace(Object obj) {
+            log(obj, LoggingLevels.TRACE);
+        }
+
+        public void debug(String format, Object... args) {
+            if (isDebugEnabled()) {
+                String message = String.format(format, args);
+
+                log(message, LoggingLevels.DEBUG);
+            }
+        }
+
+        public void debug(Throwable t, String format, Object... args) {
+            if (isDebugEnabled()) {
+                String message = String.format(format, args);
+
+                log(message, t, LoggingLevels.DEBUG);
+            }
+        }
+
+        public void debug(String message, Throwable throwable) {
+            if (isDebugEnabled()) {
+                log(message, throwable, LoggingLevels.DEBUG);
+            }
+
+        }
+
+        public void info(String format, Object... args) {
+            if (isInfoEnabled()) {
+                String message = String.format(format, args);
+
+                log(message, LoggingLevels.INFO);
+            }
+        }
+
+        public void info(Throwable t, String format, Object... args) {
+            if (isInfoEnabled()) {
+                String message = String.format(format, args);
+
+                info(message, t);
+            }
+        }
+
+        public void info(String message, Throwable throwable) {
+            if (isInfoEnabled()) {
+                log(message, throwable, LoggingLevels.INFO);
+            }
+        }
+
+        public void warn(String format, Object... args) {
+            if (isWarnEnabled()) {
+                String message = String.format(format, args);
+
+                log(message, LoggingLevels.WARNING);
+            }
+        }
+
+        public void warn(Throwable t, String format, Object... args) {
+            if (isWarnEnabled()) {
+                String message = String.format(format, args);
+
+                warn(message, t);
+            }
+        }
+
+        public void warn(String message, Throwable throwable) {
+            if (isWarnEnabled()) {
+                log(message, throwable, LoggingLevels.WARNING);
+            }
+        }
+
+        public void error(String format, Object... args) {
+            if (isErrorEnabled()) {
+                String message = String.format(format, args);
+
+                log(message, LoggingLevels.ERROR);
+            }
+        }
+
+        public void error(Throwable t, String format, Object... args) {
+            if (isErrorEnabled()) {
+                String message = String.format(format, args);
+
+                error(message, t);
+            }
+        }
+
+        public void error(String message, Throwable throwable) {
+            if (isErrorEnabled()) {
+                log(message, throwable, LoggingLevels.ERROR);
+            }
+        }
+
+        public void trace(String format, Object... args) {
+            if (isErrorEnabled()) {
+                String message = String.format(format, args);
+
+                log(message, LoggingLevels.TRACE);
+            }
+        }
+
+        public void trace(Throwable t, String format, Object... args) {
+            if (isErrorEnabled()) {
+                String message = String.format(format, args);
+
+                trace(message, t);
+            }
+        }
+
+        public void trace(String message, Throwable throwable) {
+            if (isErrorEnabled()) {
+                log(message, throwable, LoggingLevels.TRACE);
+            }
+        }
+
+        public void fatal(String format, Object... args) {
+            if (isErrorEnabled()) {
+                String message = String.format(format, args);
+
+                log(message, LoggingLevels.FATAL);
+            }
+        }
+
+        public void fatal(Throwable t, String format, Object... args) {
+            if (isErrorEnabled()) {
+                String message = String.format(format, args);
+
+                fatal(message, t);
+            }
+        }
+
+        public void fatal(String message, Throwable throwable) {
+            if (isErrorEnabled()) {
+                log(message, throwable, LoggingLevels.FATAL);
+            }
+        }
+
+        public void log(Object msg, Throwable t, LoggingLevels level) {
+            if (t != null) {
+                t.printStackTrace(Residue.getInstance().printStream);
+            }
+            Residue.getInstance().log(id, msg, level);
+        }
+
+        public void log(Object msg, LoggingLevels level) {
+            Residue.getInstance().log(id, msg, level);
+        }
+    }
+
+    class ResiduePrintStream extends PrintStream {
+
+        final String STREAM_LOGGER_ID = "default";
+
+        public ResiduePrintStream(PrintStream org) {
+            super(org);
+        }
+
+        @Override
+        public void println(String line) {
+            Residue.getInstance().getLogger(STREAM_LOGGER_ID).info(line);
+            super.println(line);
+        }
+
+        public void println(int line) {
+            Residue.getInstance().getLogger(STREAM_LOGGER_ID).info(String.valueOf(line));
+            this.println(String.valueOf(line));
+        }
+
+        public void println(double line) {
+            Residue.getInstance().getLogger(STREAM_LOGGER_ID).info(String.valueOf(line));
+            this.println(String.valueOf(line));
+        }
+
+        // implement more later ...
     }
 
     /**
@@ -453,6 +598,13 @@ public class Residue {
         Logger newLogger = new Logger(id);
         loggers.put(id, newLogger);
         return newLogger;
+    }
+
+    public static Logger getClassLogger() {
+        StackTraceElement[] stacktrace = Thread.currentThread().getStackTrace();
+        StackTraceElement element = stacktrace[2];
+        String name = element.getClassName();
+        return getInstance().getLogger(name);
     }
 
     /**
@@ -856,11 +1008,15 @@ public class Residue {
     private static class ResidueUtils {
 
         private static void log(Object msg) {
-            System.out.println(msg);
+            synchronized (System.out) {
+                System.out.println(msg);
+            }
         }
 
         private static void debugLog(Object msg) {
-            System.out.println(msg);
+            synchronized (System.out) {
+                System.out.println(msg);
+            }
         }
 
         private static PrivateKey getPemPrivateKey(String filename, String secret) throws Exception {
@@ -1383,13 +1539,5 @@ public class Residue {
 
     private void log(String loggerId, Object msg, LoggingLevels level) {
         log(loggerId, msg == null ? "NULL" : msg.toString(), level, 0);
-    }
-
-    private void log(String loggerId, Object msg, Object arg, LoggingLevels level) {
-        String finalMsg = msg == null ? "NULL" : msg.toString();
-        if (arg != null) {
-            finalMsg += " " + arg.toString();
-        }
-        log(loggerId, finalMsg, level, 0);
     }
 }
