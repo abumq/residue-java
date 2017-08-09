@@ -1,21 +1,11 @@
 package com.muflihun.residue;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.reflect.TypeToken;
-import com.muflihun.residue.thirdparty.android.util.Base64;
-
-import org.bouncycastle.asn1.ASN1EncodableVector;
-import org.bouncycastle.asn1.ASN1Integer;
-import org.bouncycastle.asn1.ASN1ObjectIdentifier;
-import org.bouncycastle.asn1.ASN1Sequence;
-import org.bouncycastle.asn1.DERNull;
-import org.bouncycastle.asn1.DEROctetString;
-import org.bouncycastle.asn1.DERSequence;
-import org.bouncycastle.asn1.pkcs.PKCSObjectIdentifiers;
-
+import javax.crypto.Cipher;
+import javax.crypto.EncryptedPrivateKeyInfo;
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.PBEKeySpec;
+import javax.crypto.spec.SecretKeySpec;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.File;
@@ -56,12 +46,19 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.zip.DeflaterOutputStream;
 
-import javax.crypto.Cipher;
-import javax.crypto.EncryptedPrivateKeyInfo;
-import javax.crypto.SecretKeyFactory;
-import javax.crypto.spec.IvParameterSpec;
-import javax.crypto.spec.PBEKeySpec;
-import javax.crypto.spec.SecretKeySpec;
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.reflect.TypeToken;
+import org.bouncycastle.asn1.ASN1EncodableVector;
+import org.bouncycastle.asn1.ASN1Integer;
+import org.bouncycastle.asn1.ASN1ObjectIdentifier;
+import org.bouncycastle.asn1.ASN1Sequence;
+import org.bouncycastle.asn1.DERNull;
+import org.bouncycastle.asn1.DEROctetString;
+import org.bouncycastle.asn1.DERSequence;
+import org.bouncycastle.asn1.pkcs.PKCSObjectIdentifiers;
 
 /**
  * Provides logging interface for interacting with residue server seamlessly
@@ -93,8 +90,9 @@ public class Residue {
     private Integer rsaKeySize = 2048;
     private Integer keySize = 128;
     private Boolean utcTime = false;
-    private Integer timeOffset;
-	private Boolean useTimeOffsetIfNotUtc;
+    private Integer timeOffset = 0;
+    private Boolean useTimeOffsetIfNotUtc = false;
+    private Boolean enableDebugging = true;
     private Integer dispatchDelay = 1;
     private Boolean autoBulkParams = true;
     private Boolean plainRequest = false;
@@ -109,8 +107,8 @@ public class Residue {
 
     private String serverKeyFilename;
 
-    private boolean connected;
-    private boolean connecting;
+    private boolean connected = false;
+    private boolean connecting = false;
 
     private String key;
     private String clientId;
@@ -134,11 +132,6 @@ public class Residue {
     }
 
     private Residue() {
-        this.connected = false;
-        this.connecting = false;
-        this.utcTime = false;
-        this.timeOffset = 0;
-		this.useTimeOffsetIfNotUtc = false;
     }
 
     public String getHost() {
@@ -236,6 +229,10 @@ public class Residue {
         this.utcTime = utcTime;
     }
 
+    public void setEnableDebugging(Boolean enableDebugging) {
+        this.enableDebugging = enableDebugging;
+    }
+
 	/**
 	 * If this is true the timeOffset will only take affect if the
 	 * current timezone is NOT UTC.
@@ -270,6 +267,14 @@ public class Residue {
 
         if (jsonObject.has("utc_time")) {
             setUtcTime(jsonObject.get("utc_time").getAsBoolean());
+        }
+
+        if (jsonObject.has("enable_debugging")) {
+            setEnableDebugging(jsonObject.get("enable_debugging").getAsBoolean());
+        }
+
+        if (jsonObject.has("use_timeoffset_if_not_utc")) {
+            setUseTimeOffsetIfNotUtc(jsonObject.get("use_timeoffset_if_not_utc").getAsBoolean());
         }
 
         if (jsonObject.has("time_offset")) {
@@ -364,36 +369,75 @@ public class Residue {
             this.id = id;
         }
 
-        public void info(String msg) {
-            Residue.getInstance().log(id, msg, LoggingLevels.INFO);
+        public void info(Object msg) {
+            info(msg, null);
         }
 
-        public void warning(String msg) {
-            Residue.getInstance().log(id, msg, LoggingLevels.WARNING);
+        public void warning(Object msg) {
+            warning(msg, null);
+        }
+        public void warn(Object msg) {
+            warning(msg, null);
         }
 
-        public void error(String msg) {
-            Residue.getInstance().log(id, msg, LoggingLevels.ERROR);
+        public void error(Object msg) {
+            error(msg, null);
         }
 
-        public void debug(String msg) {
-            Residue.getInstance().log(id, msg, LoggingLevels.DEBUG);
+        public void err(Object msg) {
+            error(msg, null);
         }
 
-        public void fatal(String msg) {
-            Residue.getInstance().log(id, msg, LoggingLevels.FATAL);
+        public void debug(Object msg) {
+            debug(msg, null);
         }
 
-        public void trace(String msg) {
-            Residue.getInstance().log(id, msg, LoggingLevels.TRACE);
+        public void fatal(Object msg) {
+            fatal(msg, null);
         }
 
-        public void verbose(String msg) {
-            Residue.getInstance().log(id, msg, LoggingLevels.VERBOSE);
+        public void trace(Object msg) {
+            trace(msg, null);
         }
 
-        public void verbose(String msg, Integer vlevel) {
-            Residue.getInstance().log(id, msg, LoggingLevels.VERBOSE, vlevel);
+        public void verbose(Object msg) {
+            verbose(msg, null);
+        }
+
+        public void info(Object msg, Object obj) {
+            Residue.getInstance().log(id, msg, obj, LoggingLevels.INFO);
+        }
+
+        public void warning(Object msg, Object obj) {
+            Residue.getInstance().log(id, msg, obj, LoggingLevels.WARNING);
+        }
+
+        public void warn(Object msg, Object obj) {
+            warning(msg, obj);
+        }
+
+        public void error(Object msg, Object obj) {
+            Residue.getInstance().log(id, msg, obj, LoggingLevels.ERROR);
+        }
+
+        public void debug(Object msg, Object obj) {
+            Residue.getInstance().log(id, msg, obj, LoggingLevels.DEBUG);
+        }
+
+        public void fatal(Object msg, Object obj) {
+            Residue.getInstance().log(id, msg, obj, LoggingLevels.FATAL);
+        }
+
+        public void trace(Object msg, Object obj) {
+            Residue.getInstance().log(id, msg, obj, LoggingLevels.TRACE);
+        }
+
+        public void verbose(Object msg, Integer vlevel) {
+            Residue.getInstance().log(id, msg == null ? "NULL" : msg.toString(), LoggingLevels.VERBOSE, vlevel);
+        }
+
+        public boolean isDebugEnabled() {
+            return Residue.getInstance().enableDebugging;
         }
     }
 
@@ -506,7 +550,7 @@ public class Residue {
                             return;
                         }
                         try {
-                            if (!data.isEmpty() && data.substring(1, 1) == "{") {
+                            if (!data.isEmpty() && "{".equals(data.substring(1, 1))) {
                                 // error?
 
                                 ResidueUtils.log("Failed to connect. Error response: " + data);
@@ -518,12 +562,14 @@ public class Residue {
                             }
                             byte[] decoded = ResidueUtils.base64Decode(data);
                             String s2 = ResidueUtils.decryptRSA(decoded, getInstance().privateKey);
-                            int pos = s2.indexOf("{\"ack\"");
-                            if (pos == -1) {
-                                ResidueUtils.log("Pos == -1");
-                                return;
+                            if (s2 != null) {
+                                int pos = s2.indexOf("{\"ack\"");
+                                if (pos == -1) {
+                                    ResidueUtils.log("Pos == -1");
+                                    return;
+                                }
+                                s2 = s2.substring(pos); // FIXME: Fix this decryption! // TODO: FOR_ANDROID
                             }
-                            s2 = s2.substring(pos); // FIXME: Fix this decryption! // TODO: FOR_ANDROID
                             JsonObject nonAckResponse = new Gson().fromJson(s2, JsonObject.class);
 
                             getInstance().key = nonAckResponse.get("key").getAsString();
@@ -597,6 +643,7 @@ public class Residue {
                                 }
                             });
                         } catch (Exception e) {
+                            ResidueUtils.log(e.getMessage());
                             throw e;
                         }
                     }
@@ -1334,7 +1381,15 @@ public class Residue {
         }
     }
 
-    private void log(String loggerId, String msg, LoggingLevels level) {
-        log(loggerId, msg, level, 0);
+    private void log(String loggerId, Object msg, LoggingLevels level) {
+        log(loggerId, msg == null ? "NULL" : msg.toString(), level, 0);
+    }
+
+    private void log(String loggerId, Object msg, Object arg, LoggingLevels level) {
+        String finalMsg = msg == null ? "NULL" : msg.toString();
+        if (arg != null) {
+            finalMsg += " " + arg.toString();
+        }
+        log(loggerId, finalMsg, level, 0);
     }
 }

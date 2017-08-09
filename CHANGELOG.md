@@ -3,6 +3,7 @@
 ## [Unreleased]
 ### Added
 - Ability to use timeOffset only when local system is using non-UTC timezone
+- Support to replace existing logging libraries with ease
 
 ## [1.0.0-beta.2]
 ### Added
