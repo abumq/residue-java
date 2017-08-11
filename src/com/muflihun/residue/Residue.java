@@ -108,7 +108,6 @@ public class Residue {
     private Boolean utcTime = false;
     private Integer timeOffset = 0;
     private Boolean useTimeOffsetIfNotUtc = false;
-    private Boolean enableDebugging = true;
     private Integer dispatchDelay = 1;
     private Boolean autoBulkParams = true;
     private Boolean plainRequest = false;
@@ -246,10 +245,6 @@ public class Residue {
         this.utcTime = utcTime;
     }
 
-    public void setEnableDebugging(Boolean enableDebugging) {
-        this.enableDebugging = enableDebugging;
-    }
-
 	/**
 	 * If this is true the timeOffset will only take affect if the
 	 * current timezone is NOT UTC.
@@ -284,10 +279,6 @@ public class Residue {
 
         if (jsonObject.has("utc_time")) {
             setUtcTime(jsonObject.get("utc_time").getAsBoolean());
-        }
-
-        if (jsonObject.has("enable_debugging")) {
-            setEnableDebugging(jsonObject.get("enable_debugging").getAsBoolean());
         }
 
         if (jsonObject.has("use_timeoffset_if_not_utc")) {
@@ -973,7 +964,7 @@ public class Residue {
 
                             @Override
                             public void failed(Throwable exc, AsynchronousSocketChannel channel) {
-                                ResidueUtils.log(exc.getMessage());
+                                ResidueUtils.log("Thrown exception while reading: " + exc.getMessage());
                                 if ("Connection reset by peer".equals(exc.getMessage())) {
                                     isConnected = false;
                                     getInstance().connected = false;
@@ -1030,9 +1021,9 @@ public class Residue {
         }
 
         private static void debugLog(Object msg) {
-            synchronized (System.out) {
+            /*synchronized (System.out) {
                 System.out.println(msg);
-            }
+            }*/
         }
 
         private static PrivateKey getPemPrivateKey(String filename, String secret) throws Exception {
@@ -1248,6 +1239,7 @@ public class Residue {
                 // without tokens
                 return;
             }
+            ResidueUtils.debugLog("Obtaining new token for [" + loggerId + "]");
             final CountDownLatch latch = new CountDownLatch(1);
             JsonObject j = new JsonObject();
             j.addProperty("_t", ResidueUtils.getTimestamp());
@@ -1278,10 +1270,10 @@ public class Residue {
                             }
                         } else {
                             lastError = tokenResponse.get("error_text").getAsString();
-                            ResidueUtils.log(getInstance().lastError);
+                            ResidueUtils.debugLog("Error: " + getInstance().lastError);
                         }
                     } else {
-                        ResidueUtils.log("Error while obtaining token");
+                        ResidueUtils.debugLog("Error while obtaining token");
                     }
                     latch.countDown();
                 }
@@ -1437,7 +1429,6 @@ public class Residue {
                     for (String loggerId : loggerIds) {
                         if (!hasValidToken(loggerId)) {
                             try {
-                                ResidueUtils.debugLog("Obtaining new token for [" + loggerId + "]");
                                 obtainToken(loggerId, null /* means read from map */);
                             } catch (Exception e) {
                                 // Ignore
