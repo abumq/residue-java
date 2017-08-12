@@ -125,6 +125,7 @@ public class Residue {
     private boolean connected = false;
     private boolean connecting = false;
 
+    private String licensee;
     private String key;
     private String clientId;
     private Integer age;
@@ -148,6 +149,10 @@ public class Residue {
     }
 
     private Residue() {
+    }
+
+    public String getLicensee() {
+        return licensee;
     }
 
     public String getHost() {
@@ -751,6 +756,7 @@ public class Residue {
                                         getInstance().tokenPort = finalConnection.get("token_port").getAsInt();
                                         getInstance().maxBulkSize = finalConnection.get("max_bulk_size").getAsInt();
                                         getInstance().serverFlags = finalConnection.get("flags").getAsInt();
+                                        getInstance().licensee = finalConnection.get("licensee").getAsString();
                                         getInstance().dateCreated = new Date(finalConnection.get("date_created").getAsLong() * 1000);
                                         System.setOut(getInstance().printStream);
                                         if (Boolean.TRUE.equals(getInstance().autoBulkParams) && Flag.ALLOW_BULK_LOG_REQUEST.isSet()) {
