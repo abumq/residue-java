@@ -113,6 +113,7 @@ public class Residue {
     private Boolean plainRequest = false;
     private Boolean bulkDispatch = false;
     private Integer bulkSize = 0;
+    private String defaultLoggerId = "default";
 
     private Map<String, String> accessCodeMap;
 
@@ -193,6 +194,10 @@ public class Residue {
 
     public void setDispatchDelay(final Integer dispatchDelay) {
         this.dispatchDelay = dispatchDelay;
+    }
+
+    public void setDefaultLoggerId(final String defaultLoggerId) {
+        this.defaultLoggerId = defaultLoggerId;
     }
 
     public void setClientId(final String clientId) {
@@ -378,6 +383,10 @@ public class Residue {
     public static class Logger {
 
         private String id;
+
+        private Logger() {
+            this(getInstance().defaultLoggerId);
+        }
 
         private Logger(String id) {
             this.id = id;
@@ -568,9 +577,7 @@ public class Residue {
         }
     }
 
-    class ResiduePrintStream extends PrintStream {
-
-        final String STREAM_LOGGER_ID = "default";
+    public static class ResiduePrintStream extends PrintStream {
 
         private ResiduePrintStream(PrintStream org) {
             super(org);
@@ -578,17 +585,17 @@ public class Residue {
 
         @Override
         public void println(String line) {
-            Residue.getInstance().getLogger(STREAM_LOGGER_ID).info(line);
+            Residue.getInstance().getLogger().info(line);
             super.println(line);
         }
 
         public void println(int line) {
-            Residue.getInstance().getLogger(STREAM_LOGGER_ID).info(String.valueOf(line));
+            Residue.getInstance().getLogger().info(String.valueOf(line));
             this.println(String.valueOf(line));
         }
 
         public void println(double line) {
-            Residue.getInstance().getLogger(STREAM_LOGGER_ID).info(String.valueOf(line));
+            Residue.getInstance().getLogger().info(String.valueOf(line));
             this.println(String.valueOf(line));
         }
 
@@ -607,6 +614,16 @@ public class Residue {
         Logger newLogger = new Logger(id);
         loggers.put(id, newLogger);
         return newLogger;
+    }
+
+    /**
+     * Gets default logger
+     *
+     * @see #setDefaultLoggerId(String)
+     * @see Logger
+     */
+    public synchronized Logger getLogger() {
+        return getLogger(getInstance().defaultLoggerId);
     }
 
     public static Logger getClassLogger() {
@@ -758,7 +775,6 @@ public class Residue {
                                         getInstance().serverFlags = finalConnection.get("flags").getAsInt();
                                         getInstance().licensee = finalConnection.get("licensee").getAsString();
                                         getInstance().dateCreated = new Date(finalConnection.get("date_created").getAsLong() * 1000);
-                                        System.setOut(getInstance().printStream);
                                         if (Boolean.TRUE.equals(getInstance().autoBulkParams) && Flag.ALLOW_BULK_LOG_REQUEST.isSet()) {
                                             getInstance().bulkSize = Math.min(getInstance().maxBulkSize, 40);
                                             getInstance().bulkDispatch = true;
@@ -794,6 +810,7 @@ public class Residue {
                                                 @Override
                                                 public void handle(String data, boolean hasError) {
                                                     logForDebugging();
+                                                    System.setOut(getInstance().printStream);
                                                     latch.countDown();
                                                 }
                                             });

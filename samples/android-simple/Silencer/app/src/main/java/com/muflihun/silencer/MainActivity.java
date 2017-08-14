@@ -78,21 +78,6 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
-
-        Button btnVerbose3 = (Button) findViewById(R.id.logV3);
-        btnVerbose3.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-
-                showMessageIfNotConnected(view);
-                Integer count = Integer.valueOf(numberOfMsgs.getText().toString());
-                for (Integer i = 1; i <= count; ++i) {
-                    // if user enters %c in msg it will be replaced with idx
-                    String msg = editText.getText().toString().replace("%c", i.toString());
-                    getLogger().verbose(msg, 3);
-                }
-            }
-        });
     }
 
     @Override
