@@ -1038,9 +1038,9 @@ public class Residue {
     private static class ResidueUtils {
 
         private static void log(Object msg) {
-            synchronized (System.out) {
+            /*synchronized (System.out) {
                 System.out.println(msg);
-            }
+            }*/
         }
 
         private static void debugLog(Object msg) {
