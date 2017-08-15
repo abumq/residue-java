@@ -1,3 +1,5 @@
+﷽
+
 ![banner]
 
 [![Version](https://img.shields.io/github/release/muflihun/residue-java.svg)](https://github.com/muflihun/residue-java/releases/latest)
