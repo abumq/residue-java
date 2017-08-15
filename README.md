@@ -1,6 +1,19 @@
 ![banner]
 
-[ This is in very early stages of development ]
+[![Version](https://img.shields.io/github/release/muflihun/residue-java.svg)](https://github.com/muflihun/residue-java/releases/latest)
+
+[![GitHub license](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/muflihun/residue-java/blob/master/LICENCE)
+
+[![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.me/MuflihunDotCom/25)
+
+## Introduction
+This library provides you interface to connect to the residue seamlessly and use it as your central logging library.
+
+Please note, until first stable release we are not providing JAR file for this library. Please feel free to import the relevant code in to your library.
+
+For regular java project you will need [Residue.java](/src/com/muflihun/residue) and [Base64.java](/src/com/muflihun/residue/Base64.java)
+
+For android project you will also need [ResidueConnectTask.java](/src/com/muflihun/residue/ResidueConnectTask.java)
 
 ## Dependencies
 
