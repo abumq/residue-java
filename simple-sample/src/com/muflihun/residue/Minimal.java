@@ -11,6 +11,7 @@ class Minimal {
             r.setAccessCodeMap(new HashMap<String, String>() {{
                 put("sample-app", "eif89");
             }});
+            r.setUtcTime(true);
             r.setApplicationName("Sample ResidueJ App");
 			r.loadConfigurations("/Users/mkhan/Projects/residue-java/simple-sample/client.conf2.json");
 

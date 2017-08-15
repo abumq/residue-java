@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.muflihun.residue.thirdparty.android.util;
+package com.muflihun.residue;
 
 import java.io.UnsupportedEncodingException;
 

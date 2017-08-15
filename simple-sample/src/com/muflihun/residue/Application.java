@@ -14,14 +14,15 @@ class Application {
             //r.setPrivateKeyFilename("/Users/majid.khan/Projects/residue/samples/clients/netcat/client-256-private.pem");
             //r.setServerKeyFilename("/Users/majid.khan/Projects/residue/samples/clients/netcat/server-1024-public.pem");
             r.setApplicationName("Sample ResidueJ App");
-            // r.setUtcTime(true);
-            r.setTimeOffset(-3600);
+            r.setUtcTime(true);
+            r.setUseTimeOffsetIfNotUtc(true);
+            r.setTimeOffset(36000);
 
             if (r.connect("localhost", 8777)) {
                 System.out.println("successfully connected");
 
 
-                final Residue.Logger l = r.getLogger("sample-app");
+                final Residue.Logger l = r.getLogger("default");
 
                 for (int i = 1; i <= 10; ++i) {
                     l.info("this is first log message " + i);
@@ -46,7 +47,6 @@ class Application {
                 t3.setName("SampleThread-3");
                 t3.start();
 
-				        l.verbose("this is verbose log level 3", 3);
 				        l.debug("this is debug log");
 /*
                 System.out.println("waiting to expire the token");
