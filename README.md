@@ -2,11 +2,7 @@
 
 ![banner]
 
-[![Version](https://img.shields.io/github/release/muflihun/residue-java.svg)](https://github.com/muflihun/residue-java/releases/latest)
-
-[![GitHub license](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/muflihun/residue-java/blob/master/LICENCE)
-
-[![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.me/MuflihunDotCom/25)
+[![Version](https://img.shields.io/github/release/muflihun/residue-java.svg)](https://github.com/muflihun/residue-java/releases/latest) [![GitHub license](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/muflihun/residue-java/blob/master/LICENCE) [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.me/MuflihunDotCom/25)
 
 ## Introduction
 This library provides you interface to connect to the residue seamlessly and use it as your central logging library.
@@ -21,6 +17,7 @@ For android project you will also need [ResidueConnectTask.java](/src/com/muflih
 
  * [BouncyCastle](http://www.bouncycastle.org/) 1.56+
  * [Gson](https://github.com/google/gson) v2.6.2+
+ * [API level 26](https://developer.android.com/about/versions/oreo/android-8.0.html) for Android
 
 ### Download Dependencies
 
