@@ -255,9 +255,9 @@ public class Residue {
         this.utcTime = utcTime;
     }
 
-	/**
-	 * If this is true the timeOffset will only take affect if the
-	 * current timezone is NOT UTC.
+    /**
+     * If this is true the timeOffset will only take affect if the
+     * current timezone is NOT UTC.
      *
      * You must enable utcTime with this
      */
@@ -1541,31 +1541,31 @@ public class Residue {
                 break;
             }
         }
-		Boolean isNonUTC = false;
+        Boolean isNonUTC = false;
         Calendar c = Calendar.getInstance();
         if (Boolean.TRUE.equals(utcTime)) {
             TimeZone timeZone = c.getTimeZone();
             int offset = timeZone.getRawOffset();
-						
+                        
             if (timeZone.inDaylightTime(new Date())) {
                 offset = offset + timeZone.getDSTSavings();
             }
-			
+            
             int offsetHrs = offset / 1000 / 60 / 60;
             int offsetMins = offset / 1000 / 60 % 60;
-			
-			if (offsetHrs != 0 || offsetMins != 0) { // already utc
-	            c.add(Calendar.HOUR_OF_DAY, -offsetHrs);
-	            c.add(Calendar.MINUTE, -offsetMins);
-				isNonUTC = true;
-			}
+            
+            if (offsetHrs != 0 || offsetMins != 0) { // already utc
+                c.add(Calendar.HOUR_OF_DAY, -offsetHrs);
+                c.add(Calendar.MINUTE, -offsetMins);
+                isNonUTC = true;
+            }
         }
         if (timeOffset != null) {
-			if (useTimeOffsetIfNotUtc && isNonUTC) {
-				c.add(Calendar.SECOND, timeOffset);
-			} else if (!useTimeOffsetIfNotUtc) {
-            	c.add(Calendar.SECOND, timeOffset);
-			}
+            if (useTimeOffsetIfNotUtc && isNonUTC) {
+                c.add(Calendar.SECOND, timeOffset);
+            } else if (!useTimeOffsetIfNotUtc) {
+                c.add(Calendar.SECOND, timeOffset);
+            }
         }
         JsonObject j = new JsonObject();
         j.addProperty("datetime", c.getTime().getTime());

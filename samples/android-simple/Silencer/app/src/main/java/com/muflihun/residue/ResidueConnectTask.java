@@ -7,7 +7,6 @@ public class ResidueConnectTask extends AsyncTask<Object, Object, Void> {
 
         try {
             Residue.getInstance().reconnect();
-
         } catch (Exception e) {
             e.printStackTrace();
         }
