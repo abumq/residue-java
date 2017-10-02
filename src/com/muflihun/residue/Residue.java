@@ -376,6 +376,40 @@ public class Residue {
         }
         this.bulkSize = bulkSize;
     }
+    
+    public static class ResidueLogger extends Handler {
+      public LoggingLevels levelToResidueLevel(LogRecord record) {
+        switch (record.getLevel().intValue()) {
+          case 0: // SEVERE
+            return LoggingLevels.FATAL;
+          default:
+            return LoggingLevels.INFO;
+        }
+      }
+
+      @Override
+      public void publish(LogRecord record) {
+          StringBuilder sb = new StringBuilder();
+          sb.append(record.getMillis())
+            .append(" - ")
+            .append(record.getSourceClassName())
+            .append("#")
+            .append(record.getSourceMethodName())
+            .append(" - ")
+            .append(record.getMessage());
+          System.out.println(sb.toString());
+
+          Residue.getInstance().log("sample-app", sb.toString(), levelToResidueLevel(record));
+      }
+
+      @Override
+      public void flush() {
+      }
+
+      @Override
+      public void close() throws SecurityException {
+      }
+    }
 
     /**
      * Logger class to send log messages to the server
@@ -1329,7 +1363,7 @@ public class Residue {
 
     private boolean shouldTouch() {
         if (!connected || connecting) {
-            // Can't send touch 
+            // Can't send touch
             return false;
         }
         if (age == 0) {
@@ -1546,14 +1580,14 @@ public class Residue {
         if (Boolean.TRUE.equals(utcTime)) {
             TimeZone timeZone = c.getTimeZone();
             int offset = timeZone.getRawOffset();
-                        
+
             if (timeZone.inDaylightTime(new Date())) {
                 offset = offset + timeZone.getDSTSavings();
             }
-            
+
             int offsetHrs = offset / 1000 / 60 / 60;
             int offsetMins = offset / 1000 / 60 % 60;
-            
+
             if (offsetHrs != 0 || offsetMins != 0) { // already utc
                 c.add(Calendar.HOUR_OF_DAY, -offsetHrs);
                 c.add(Calendar.MINUTE, -offsetMins);
