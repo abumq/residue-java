@@ -29,7 +29,12 @@ public class JLogger {
           r.setAccessCodeMap(new HashMap<String, String>() {{
               put("sample-app", "eif89");
           }});
-          if (r.connect("localhost", 8777)) {
+
+          //r.setUtcTime(true);
+          //r.setUseTimeOffsetIfNotUtc(true);
+          r.setTimeOffset(39600);
+
+          if (r.connect("residue-demo.muflihun.com", 8777)) {
               System.out.println("successfully connected");
               AppClass c = new AppClass();
               c.doSomething();

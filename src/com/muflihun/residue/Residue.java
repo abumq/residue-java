@@ -1568,51 +1568,45 @@ public class Residue {
       return getStackItem(4, level, vlevel);
     }
 
+    private Long getTime(Long baseTime) {
+      Boolean isNonUTC = false;
+      Calendar c = Calendar.getInstance();
+      if (baseTime != null) {
+        c.setTime(new Date(baseTime));
+      }
+      if (Boolean.TRUE.equals(utcTime)) {
+          TimeZone timeZone = c.getTimeZone();
+          int offset = timeZone.getRawOffset();
+
+          if (timeZone.inDaylightTime(new Date())) {
+              offset = offset + timeZone.getDSTSavings();
+          }
+
+          int offsetHrs = offset / 1000 / 60 / 60;
+          int offsetMins = offset / 1000 / 60 % 60;
+
+          if (offsetHrs != 0 || offsetMins != 0) { // already utc
+              c.add(Calendar.HOUR_OF_DAY, -offsetHrs);
+              c.add(Calendar.MINUTE, -offsetMins);
+              isNonUTC = true;
+          }
+      }
+      if (timeOffset != null) {
+          if (useTimeOffsetIfNotUtc && isNonUTC) {
+              c.add(Calendar.SECOND, timeOffset);
+          } else if (!useTimeOffsetIfNotUtc) {
+              c.add(Calendar.SECOND, timeOffset);
+          }
+      }
+      return c.getTime().getTime();
+    }
+
     private void log(String loggerId, String msg, LoggingLevels level, Integer vlevel) {
-        String sourceFilename = "";
         int baseIdx = 4;
-        StackTraceElement stackItem = null;
-        while (sourceFilename.isEmpty() || "Residue.java".equals(sourceFilename)) {
-            final int stackItemIndex = level == LoggingLevels.VERBOSE && vlevel > 0 ? baseIdx : (baseIdx + 1);
-            final StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
-            if (stackTrace != null && stackTrace.length > stackItemIndex) {
-                stackItem = Thread.currentThread().getStackTrace()[stackItemIndex];
-                sourceFilename = stackItem == null ? "" : stackItem.getFileName();
-            }
-            baseIdx++;
-            if (baseIdx >= 10) {
-                // too much effort, leave it!
-                // technically it should be resolved when baseIdx == 4 or 5 or max 6
-                break;
-            }
-        }
-        Boolean isNonUTC = false;
-        Calendar c = Calendar.getInstance();
-        if (Boolean.TRUE.equals(utcTime)) {
-            TimeZone timeZone = c.getTimeZone();
-            int offset = timeZone.getRawOffset();
+        StackTraceElement stackItem = getStackItem(5, level, vlevel);
+        String sourceFilename = stackItem == null ? "" : stackItem.getFileName();
 
-            if (timeZone.inDaylightTime(new Date())) {
-                offset = offset + timeZone.getDSTSavings();
-            }
-
-            int offsetHrs = offset / 1000 / 60 / 60;
-            int offsetMins = offset / 1000 / 60 % 60;
-
-            if (offsetHrs != 0 || offsetMins != 0) { // already utc
-                c.add(Calendar.HOUR_OF_DAY, -offsetHrs);
-                c.add(Calendar.MINUTE, -offsetMins);
-                isNonUTC = true;
-            }
-        }
-        if (timeOffset != null) {
-            if (useTimeOffsetIfNotUtc && isNonUTC) {
-                c.add(Calendar.SECOND, timeOffset);
-            } else if (!useTimeOffsetIfNotUtc) {
-                c.add(Calendar.SECOND, timeOffset);
-            }
-        }
-        log(c.getTime().getTime(), loggerId, msg, applicationName, level,
+        log(getTime(null), loggerId, msg, applicationName, level,
             sourceFilename, stackItem == null ? 0 : stackItem.getLineNumber(),
             stackItem == null ? "" : stackItem.getMethodName(),
             Thread.currentThread().getName(),
@@ -1647,14 +1641,14 @@ public class Residue {
     private void log(LogRecord record) {
       String loggerName = record.getLoggerName();
       if (loggerName == null || loggerName == "") {
-        loggerName = "default";
+        loggerName = getInstance().defaultLoggerId;
       }
       LoggingLevels level = LoggingLevels.INFO;
 
       StackTraceElement si = getStackItem(8, level, 0);
       Integer lineNumber = si == null ? 0 : si.getLineNumber();
 
-      log(record.getMillis(),
+      log(getTime(record.getMillis()),
           loggerName,
           record.getMessage(),
           applicationName, level,

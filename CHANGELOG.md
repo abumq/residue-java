@@ -1,5 +1,9 @@
 # Change Log
 
+## [Unreleased]
+### Added
+- Support for `java.util.logging` API
+
 ## [1.0.0-beta.3]
 ### Added
 - Ability to use timeOffset only when local system is using non-UTC timezone
