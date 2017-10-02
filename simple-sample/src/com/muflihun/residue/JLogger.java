@@ -9,9 +9,10 @@ import java.util.logging.Logger;
 public class JLogger {
 
   public static class AppClass {
-    private static final Logger LOGGER = Logger.getLogger(AppClass.class.getName());
+    private static final Logger LOGGER = Logger.getLogger("sample-app");
 
     public void doSomething(){
+        System.out.println("blah");
         LOGGER.info("in AppClass");
     }
   }
@@ -21,7 +22,7 @@ public class JLogger {
       LogManager.getLogManager().reset();
       Logger rootLogger = LogManager.getLogManager().getLogger("");
 
-      rootLogger.addHandler(new Residue.ResidueLogger());
+      rootLogger.addHandler(new Residue.ResidueLogHandler());
 
       Residue r = Residue.getInstance();
       try {

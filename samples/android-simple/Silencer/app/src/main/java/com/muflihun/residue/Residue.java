@@ -62,6 +62,10 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.zip.DeflaterOutputStream;
 
+import java.util.logging.LogRecord;
+import java.util.logging.Level;
+import java.util.logging.Handler;
+
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -375,6 +379,21 @@ public class Residue {
             throw new IllegalArgumentException("Invalid bulk dispatch size. Maximum allowed: " + maxBulkSize);
         }
         this.bulkSize = bulkSize;
+    }
+
+    public static class ResidueLogHandler extends Handler {
+      @Override
+      public void publish(LogRecord record) {
+          Residue.getInstance().log(record);
+      }
+
+      @Override
+      public void flush() {
+      }
+
+      @Override
+      public void close() throws SecurityException {
+      }
     }
 
     /**
@@ -810,7 +829,9 @@ public class Residue {
                                                 @Override
                                                 public void handle(String data, boolean hasError) {
                                                     logForDebugging();
-                                                    System.setOut(getInstance().printStream);
+                                                    // uncomment following lines
+                                                    // to enable std out to residue server instead
+                                                    //System.setOut(getInstance().printStream);
                                                     latch.countDown();
                                                 }
                                             });
@@ -1329,7 +1350,7 @@ public class Residue {
 
     private boolean shouldTouch() {
         if (!connected || connecting) {
-            // Can't send touch 
+            // Can't send touch
             return false;
         }
         if (age == 0) {
@@ -1523,6 +1544,30 @@ public class Residue {
         }
     });
 
+    private StackTraceElement getStackItem(int baseIdx, LoggingLevels level, Integer vlevel) {
+      String sourceFilename = "";
+      StackTraceElement stackItem = null;
+      while (sourceFilename.isEmpty() || "Residue.java".equals(sourceFilename)) {
+          final int stackItemIndex = level == LoggingLevels.VERBOSE && vlevel > 0 ? baseIdx : (baseIdx + 1);
+          final StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
+          if (stackTrace != null && stackTrace.length > stackItemIndex) {
+              stackItem = Thread.currentThread().getStackTrace()[stackItemIndex];
+              sourceFilename = stackItem == null ? "" : stackItem.getFileName();
+          }
+          baseIdx++;
+          if (baseIdx >= 10) {
+              // too much effort, leave it!
+              // technically it should be resolved when baseIdx == 4 or 5 or max 6
+              break;
+          }
+      }
+      return stackItem;
+    }
+
+    private StackTraceElement getStackItem(LoggingLevels level, Integer vlevel) {
+      return getStackItem(4, level, vlevel);
+    }
+
     private void log(String loggerId, String msg, LoggingLevels level, Integer vlevel) {
         String sourceFilename = "";
         int baseIdx = 4;
@@ -1546,14 +1591,14 @@ public class Residue {
         if (Boolean.TRUE.equals(utcTime)) {
             TimeZone timeZone = c.getTimeZone();
             int offset = timeZone.getRawOffset();
-                        
+
             if (timeZone.inDaylightTime(new Date())) {
                 offset = offset + timeZone.getDSTSavings();
             }
-            
+
             int offsetHrs = offset / 1000 / 60 / 60;
             int offsetMins = offset / 1000 / 60 % 60;
-            
+
             if (offsetHrs != 0 || offsetMins != 0) { // already utc
                 c.add(Calendar.HOUR_OF_DAY, -offsetHrs);
                 c.add(Calendar.MINUTE, -offsetMins);
@@ -1567,24 +1612,56 @@ public class Residue {
                 c.add(Calendar.SECOND, timeOffset);
             }
         }
-        JsonObject j = new JsonObject();
-        j.addProperty("datetime", c.getTime().getTime());
-        j.addProperty("logger", loggerId);
-        j.addProperty("msg", msg);
-        j.addProperty("file", sourceFilename);
-        j.addProperty("line", stackItem == null ? 0 : stackItem.getLineNumber());
-        j.addProperty("app", applicationName);
-        j.addProperty("level", level.getValue());
-        j.addProperty("func", stackItem == null ? "" : stackItem.getMethodName());
-        j.addProperty("thread", Thread.currentThread().getName());
-        j.addProperty("vlevel", vlevel);
+        log(c.getTime().getTime(), loggerId, msg, applicationName, level,
+            sourceFilename, stackItem == null ? 0 : stackItem.getLineNumber(),
+            stackItem == null ? "" : stackItem.getMethodName(),
+            Thread.currentThread().getName(),
+            vlevel);
+    }
 
-        synchronized (backlog) {
-            backlog.add(j);
-        }
+    private void log(Long datetime, String loggerId, String msg,
+        String applicationName, LoggingLevels level, String sourceFilename,
+        Integer sourceLineNumber, String sourceMethodName, String threadName,
+        Integer vlevel) {
+      JsonObject j = new JsonObject();
+      j.addProperty("datetime", datetime);
+      j.addProperty("logger", loggerId);
+      j.addProperty("msg", msg);
+      j.addProperty("file", sourceFilename);
+      j.addProperty("line", sourceLineNumber);
+      j.addProperty("func", sourceMethodName);
+      j.addProperty("app", applicationName);
+      j.addProperty("level", level.getValue());
+      j.addProperty("thread", threadName);
+      j.addProperty("vlevel", vlevel);
+
+      synchronized (backlog) {
+          backlog.add(j);
+      }
     }
 
     private void log(String loggerId, Object msg, LoggingLevels level) {
         log(loggerId, msg == null ? "NULL" : msg.toString(), level, 0);
+    }
+
+    private void log(LogRecord record) {
+      String loggerName = record.getLoggerName();
+      if (loggerName == null || loggerName == "") {
+        loggerName = "default";
+      }
+      LoggingLevels level = LoggingLevels.INFO;
+
+      StackTraceElement si = getStackItem(8, level, 0);
+      Integer lineNumber = si == null ? 0 : si.getLineNumber();
+
+      log(record.getMillis(),
+          loggerName,
+          record.getMessage(),
+          applicationName, level,
+          record.getSourceClassName(),
+          lineNumber,
+          record.getSourceMethodName(),
+          Thread.currentThread().getName(),
+          0);
     }
 }
