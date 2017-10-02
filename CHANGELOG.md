@@ -1,6 +1,6 @@
 # Change Log
 
-## [Unreleased]
+## [1.0.0-beta.4]
 ### Added
 - Support for `java.util.logging` API
 
