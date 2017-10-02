@@ -1,14 +1,14 @@
 /**
  * Residue.java
- *
+ * <p>
  * Official Java client library for Residue logging server
- *
+ * <p>
  * Copyright (C) 2017 Muflihun Labs
- *
+ * <p>
  * https://muflihun.com
  * https://muflihun.github.io/residue
  * https://github.com/muflihun/residue-java
- *
+ * <p>
  * See https://github.com/muflihun/residue-java/blob/master/LICENSE
  * for licensing information
  */
@@ -21,6 +21,7 @@ import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
+
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.File;
@@ -62,11 +63,16 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.zip.DeflaterOutputStream;
 
+import java.util.logging.LogRecord;
+import java.util.logging.Level;
+import java.util.logging.Handler;
+
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
+
 import org.bouncycastle.asn1.ASN1EncodableVector;
 import org.bouncycastle.asn1.ASN1Integer;
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
@@ -320,7 +326,8 @@ public class Residue {
         }
 
         if (jsonObject.has("access_codes")) {
-            Type type = new TypeToken<List<Map<String, String>>>(){}.getType();
+            Type type = new TypeToken<List<Map<String, String>>>() {
+            }.getType();
 
             Map<String, String> newMap = new HashMap<>();
             List<Map<String, String>> accessCodes = new Gson().fromJson(jsonObject.getAsJsonArray("access_codes"), type);
@@ -375,6 +382,33 @@ public class Residue {
             throw new IllegalArgumentException("Invalid bulk dispatch size. Maximum allowed: " + maxBulkSize);
         }
         this.bulkSize = bulkSize;
+    }
+
+    /**
+     * Extension for Handler from Java logging API for using in existing projects
+     *
+     * Here is how levels map:
+     * SEVERE => ERROR
+     * WARNING => WARNING
+     * INFO => INFO
+     * CONFIG => DEBUG
+     * FINE => VERBOSE level 3
+     * FINER => VERBOSE level 5
+     * FINEST => VERBOSE level 9
+     */
+    public static class ResidueLogHandler extends Handler {
+        @Override
+        public void publish(LogRecord record) {
+            Residue.getInstance().log(record);
+        }
+
+        @Override
+        public void flush() {
+        }
+
+        @Override
+        public void close() throws SecurityException {
+        }
     }
 
     /**
@@ -565,6 +599,28 @@ public class Residue {
             }
         }
 
+        public void verbose(Integer vlevel, String format, Object... args) {
+            if (isErrorEnabled()) {
+                String message = String.format(format, args);
+
+                log(message, LoggingLevels.VERBOSE, vlevel);
+            }
+        }
+
+        public void verbose(Integer vlevel, Throwable t, String format, Object... args) {
+            if (isErrorEnabled()) {
+                String message = String.format(format, args);
+
+                verbose(vlevel, message, t);
+            }
+        }
+
+        public void verbose(Integer vlevel, String message, Throwable throwable) {
+            if (isErrorEnabled()) {
+                log(message, throwable, LoggingLevels.VERBOSE, vlevel);
+            }
+        }
+
         public void log(Object msg, Throwable t, LoggingLevels level) {
             if (t != null) {
                 t.printStackTrace(Residue.getInstance().printStream);
@@ -574,6 +630,17 @@ public class Residue {
 
         public void log(Object msg, LoggingLevels level) {
             Residue.getInstance().log(id, msg, level);
+        }
+
+        public void log(Object msg, Throwable t, LoggingLevels level, Integer vlevel) {
+            if (t != null) {
+                t.printStackTrace(Residue.getInstance().printStream);
+            }
+            Residue.getInstance().log(id, msg, level, vlevel);
+        }
+
+        public void log(Object msg, LoggingLevels level, Integer vlevel) {
+            Residue.getInstance().log(id, msg, level, vlevel);
         }
     }
 
@@ -810,7 +877,9 @@ public class Residue {
                                                 @Override
                                                 public void handle(String data, boolean hasError) {
                                                     logForDebugging();
-                                                    System.setOut(getInstance().printStream);
+                                                    // uncomment following lines
+                                                    // to enable std out to residue server instead
+                                                    //System.setOut(getInstance().printStream);
                                                     latch.countDown();
                                                 }
                                             });
@@ -1329,7 +1398,7 @@ public class Residue {
 
     private boolean shouldTouch() {
         if (!connected || connecting) {
-            // Can't send touch 
+            // Can't send touch
             return false;
         }
         if (age == 0) {
@@ -1523,9 +1592,8 @@ public class Residue {
         }
     });
 
-    private void log(String loggerId, String msg, LoggingLevels level, Integer vlevel) {
+    private StackTraceElement getStackItem(int baseIdx, LoggingLevels level, Integer vlevel) {
         String sourceFilename = "";
-        int baseIdx = 4;
         StackTraceElement stackItem = null;
         while (sourceFilename.isEmpty() || "Residue.java".equals(sourceFilename)) {
             final int stackItemIndex = level == LoggingLevels.VERBOSE && vlevel > 0 ? baseIdx : (baseIdx + 1);
@@ -1541,19 +1609,30 @@ public class Residue {
                 break;
             }
         }
+        return stackItem;
+    }
+
+    private StackTraceElement getStackItem(LoggingLevels level, Integer vlevel) {
+        return getStackItem(4, level, vlevel);
+    }
+
+    private Long getTime(Long baseTime) {
         Boolean isNonUTC = false;
         Calendar c = Calendar.getInstance();
+        if (baseTime != null) {
+            c.setTime(new Date(baseTime));
+        }
         if (Boolean.TRUE.equals(utcTime)) {
             TimeZone timeZone = c.getTimeZone();
             int offset = timeZone.getRawOffset();
-                        
+
             if (timeZone.inDaylightTime(new Date())) {
                 offset = offset + timeZone.getDSTSavings();
             }
-            
+
             int offsetHrs = offset / 1000 / 60 / 60;
             int offsetMins = offset / 1000 / 60 % 60;
-            
+
             if (offsetHrs != 0 || offsetMins != 0) { // already utc
                 c.add(Calendar.HOUR_OF_DAY, -offsetHrs);
                 c.add(Calendar.MINUTE, -offsetMins);
@@ -1567,16 +1646,35 @@ public class Residue {
                 c.add(Calendar.SECOND, timeOffset);
             }
         }
+        return c.getTime().getTime();
+    }
+
+    private void log(String loggerId, String msg, LoggingLevels level, Integer vlevel) {
+        int baseIdx = 4;
+        StackTraceElement stackItem = getStackItem(5, level, vlevel);
+        String sourceFilename = stackItem == null ? "" : stackItem.getFileName();
+
+        log(getTime(null), loggerId, msg, applicationName, level,
+                sourceFilename, stackItem == null ? 0 : stackItem.getLineNumber(),
+                stackItem == null ? "" : stackItem.getMethodName(),
+                Thread.currentThread().getName(),
+                vlevel);
+    }
+
+    private void log(Long datetime, String loggerId, String msg,
+                     String applicationName, LoggingLevels level, String sourceFilename,
+                     Integer sourceLineNumber, String sourceMethodName, String threadName,
+                     Integer vlevel) {
         JsonObject j = new JsonObject();
-        j.addProperty("datetime", c.getTime().getTime());
+        j.addProperty("datetime", datetime);
         j.addProperty("logger", loggerId);
         j.addProperty("msg", msg);
         j.addProperty("file", sourceFilename);
-        j.addProperty("line", stackItem == null ? 0 : stackItem.getLineNumber());
+        j.addProperty("line", sourceLineNumber);
+        j.addProperty("func", sourceMethodName);
         j.addProperty("app", applicationName);
         j.addProperty("level", level.getValue());
-        j.addProperty("func", stackItem == null ? "" : stackItem.getMethodName());
-        j.addProperty("thread", Thread.currentThread().getName());
+        j.addProperty("thread", threadName);
         j.addProperty("vlevel", vlevel);
 
         synchronized (backlog) {
@@ -1586,5 +1684,68 @@ public class Residue {
 
     private void log(String loggerId, Object msg, LoggingLevels level) {
         log(loggerId, msg == null ? "NULL" : msg.toString(), level, 0);
+    }
+
+    private void log(String loggerId, Object msg, LoggingLevels level, Integer vlevel) {
+        log(loggerId, msg == null ? "NULL" : msg.toString(), level, vlevel);
+    }
+
+    /**
+     *
+     * Logs using java logging API's LogRecord.
+     *
+     * Level map:
+     *
+     * SEVERE => ERROR
+     * WARNING => WARNING
+     * INFO => INFO
+     * CONFIG => DEBUG
+     * FINE => VERBOSE level 3
+     * FINER => VERBOSE level 5
+     * FINEST => VERBOSE level 9
+     */
+    private void log(LogRecord record) {
+        String loggerName = record.getLoggerName();
+
+        if (loggerName == null || loggerName.trim().isEmpty()) {
+            loggerName = getInstance().defaultLoggerId;
+        }
+
+        Integer vlevel = 0;
+        LoggingLevels level;
+
+        if (record.getLevel() == Level.SEVERE) {
+            level = LoggingLevels.ERROR;
+        } else if (record.getLevel() == Level.WARNING) {
+            level = LoggingLevels.WARNING;
+        } else if (record.getLevel() == Level.INFO) {
+            level = LoggingLevels.INFO;
+        } else if (record.getLevel() == Level.CONFIG) {
+            level = LoggingLevels.DEBUG;
+        } else if (record.getLevel() == Level.FINE) {
+            level = LoggingLevels.VERBOSE;
+            vlevel = 3;
+        } else if (record.getLevel() == Level.FINER) {
+            level = LoggingLevels.VERBOSE;
+            vlevel = 5;
+        } else if (record.getLevel() == Level.FINEST) {
+            level = LoggingLevels.VERBOSE;
+            vlevel = 9;
+        } else {
+            level = LoggingLevels.INFO;
+        }
+
+        StackTraceElement si = getStackItem(8, level, vlevel);
+        Integer lineNumber = si == null ? 0 : si.getLineNumber();
+
+        log(getTime(record.getMillis()),
+                loggerName,
+                record.getMessage(),
+                applicationName, level,
+                record.getSourceClassName(),
+                lineNumber,
+                record.getSourceMethodName(),
+                Thread.currentThread().getName(),
+                vlevel);
     }
 }

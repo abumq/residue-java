@@ -22,7 +22,7 @@ class Application {
                 System.out.println("successfully connected");
 
 
-                final Residue.Logger l = r.getLogger("default");
+                final Residue.Logger l = r.getLogger("sample-app");
 
                 for (int i = 1; i <= 10; ++i) {
                     l.info("this is first log message " + i);
