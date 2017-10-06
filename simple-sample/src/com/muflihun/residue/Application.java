@@ -20,6 +20,8 @@ class Application {
 
             if (r.connect("localhost", 8777)) {
                 System.out.println("successfully connected");
+                System.out.println("Server version: " + r.getServerVersion());
+                System.out.println("Server licensee: " + r.getLicensee());
 
 
                 final Residue.Logger l = r.getLogger("sample-app");

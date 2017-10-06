@@ -1,5 +1,10 @@
 # Change Log
 
+## [1.0.1]
+### Updates
+- Compatibility with residue v1.2.0
+- Added `serverInfo` under `Residue.instance()`
+
 ## [1.0.0-beta.4]
 ### Added
 - Support for `java.util.logging` API
