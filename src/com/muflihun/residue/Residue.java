@@ -125,9 +125,11 @@ public class Residue {
 
     private String privateKeySecret;
     private String privateKeyFilename;
+    private String privateKeyPEM;
     private PrivateKey privateKey;
 
     private String serverKeyFilename;
+    private String serverKeyPEM;
 
     private boolean connected = false;
     private boolean connecting = false;
@@ -157,6 +159,16 @@ public class Residue {
     }
 
     private Residue() {
+    }
+
+    private boolean hasProvidedClientKey() {
+        return (privateKeyFilename != null && !privateKeyFilename.isEmpty())
+                || (privateKeyPEM != null && !privateKeyPEM.isEmpty());
+    }
+
+    private boolean hasProvidedServerKey() {
+        return (serverKeyFilename != null && !serverKeyFilename.isEmpty())
+                || (serverKeyPEM != null && !serverKeyPEM.isEmpty());
     }
 
     public String getLicensee() {
@@ -246,6 +258,10 @@ public class Residue {
         this.privateKeyFilename = privateKeyFilename;
     }
 
+    public void setPrivateKeyPEM(final String privateKeyPEM) {
+        this.privateKeyPEM = privateKeyPEM;
+    }
+
     public void setPrivateKeySecret(final String privateKeySecret) {
         this.privateKeySecret = privateKeySecret;
     }
@@ -256,6 +272,10 @@ public class Residue {
 
     public void setServerKeyFilename(final String serverKeyFilename) {
         this.serverKeyFilename = serverKeyFilename;
+    }
+
+    public void setServerKeyPEM(final String serverKeyPEM) {
+        this.serverKeyPEM = serverKeyPEM;
     }
 
     public void setApplicationName(final String applicationName) {
@@ -358,17 +378,24 @@ public class Residue {
             setServerKeyFilename(jsonObject.get("server_public_key").getAsString());
         }
 
+        if (jsonObject.has("server_public_key_pem")) {
+            setServerKeyPEM(jsonObject.get("server_public_key_pem").getAsString());
+        }
+
         if (jsonObject.has("client_id")) {
             setClientId(jsonObject.get("client_id").getAsString());
         }
 
         if (jsonObject.has("client_private_key")) {
-
             setPrivateKeyFilename(jsonObject.get("client_private_key").getAsString());
+        }
 
-            if (jsonObject.has("client_key_secret")) {
-                setPrivateKeySecret(jsonObject.get("client_key_secret").getAsString());
-            }
+        if (jsonObject.has("client_private_key_pem")) {
+            setPrivateKeyPEM(jsonObject.get("client_private_key_pem").getAsString());
+        }
+
+        if (jsonObject.has("client_key_secret")) {
+            setPrivateKeySecret(jsonObject.get("client_key_secret").getAsString());
         }
     }
 
@@ -748,9 +775,12 @@ public class Residue {
 
         final CountDownLatch latch = new CountDownLatch(3); // 3 connection sockets
         if (getInstance().clientId != null && !getInstance().clientId.isEmpty()
-                && getInstance().privateKeyFilename != null
-                && !getInstance().privateKeyFilename.isEmpty()) {
-            getInstance().privateKey = ResidueUtils.getPemPrivateKey(getInstance().privateKeyFilename, getInstance().privateKeySecret);
+                && getInstance().hasProvidedClientKey()) {
+            if (getInstance().privateKeyPEM != null && !getInstance().privateKeyPEM.isEmpty()) {
+                getInstance().privateKey = ResidueUtils.getPrivateKeyFromPEM(getInstance().privateKeyPEM, getInstance().privateKeySecret);
+            } else {
+                getInstance().privateKey = ResidueUtils.getPrivateKeyFromFile(getInstance().privateKeyFilename, getInstance().privateKeySecret);
+            }
         }
 
         getInstance().connectionClient.connect(getInstance().host, getInstance().port, new ResponseHandler("connectionClient.reconnect") {
@@ -763,8 +793,7 @@ public class Residue {
                 j.addProperty("key_size", getInstance().keySize);
                 if (getInstance().clientId != null
                         && !getInstance().clientId.isEmpty()
-                        && getInstance().privateKeyFilename != null
-                        && !getInstance().privateKeyFilename.isEmpty()
+                        && getInstance().hasProvidedClientKey()
                         && getInstance().rsaKeySize != null) {
                     j.addProperty("client_id", getInstance().clientId);
                 } else {
@@ -776,9 +805,14 @@ public class Residue {
 
                 String request = new Gson().toJson(j);
 
-                if (getInstance().serverKeyFilename != null && !getInstance().serverKeyFilename.isEmpty()) {
+                if (getInstance().hasProvidedServerKey()) {
                     try {
-                        final PublicKey publicKey = ResidueUtils.getPemPublicKey(getInstance().serverKeyFilename);
+                        final PublicKey publicKey;
+                        if (getInstance().serverKeyPEM != null && !getInstance().serverKeyPEM.isEmpty()) {
+                            publicKey = ResidueUtils.getPublicKeyFromPEM(getInstance().serverKeyPEM);
+                        } else {
+                            publicKey = ResidueUtils.getPublicKeyFromFile(getInstance().serverKeyFilename);
+                        }
                         request = ResidueUtils.base64Encode(ResidueUtils.encryptRSA(request, publicKey));
                     } catch (Exception e) {
                         ResidueUtils.log("Invalid server public key, ignoring and trying with plain connection! " + e.getMessage());
@@ -1124,7 +1158,7 @@ public class Residue {
             }*/
         }
 
-        private static PrivateKey getPemPrivateKey(String filename, String secret) throws Exception {
+        private static String readFile(String filename) throws Exception {
             File f = new File(filename);
             FileInputStream fis = new FileInputStream(f);
             DataInputStream dis = new DataInputStream(fis);
@@ -1133,8 +1167,15 @@ public class Residue {
             dis.close();
             fis.close();
 
-            String temp = new String(buf.array());
-            String privKeyPEM = temp.replace("-----BEGIN RSA PRIVATE KEY-----", "");
+            return new String(buf.array());
+        }
+
+        private static PrivateKey getPrivateKeyFromFile(String filename, String secret) throws Exception {
+            return getPrivateKeyFromPEM(readFile(filename), secret);
+        }
+
+        private static PrivateKey getPrivateKeyFromPEM(String pem, String secret) throws Exception {
+            String privKeyPEM = pem.replace("-----BEGIN RSA PRIVATE KEY-----", "");
             privKeyPEM = privKeyPEM.replace("-----END RSA PRIVATE KEY-----", "");
             privKeyPEM = privKeyPEM.trim();
 
@@ -1155,6 +1196,7 @@ public class Residue {
             KeyFactory kf = KeyFactory.getInstance("RSA");
 
             if (secret != null && !secret.isEmpty()) {
+                boolean f = keySpec.getEncoded() == privKey;
                 // FIXME: Encrypted private keys not working
                 PBEKeySpec pbeSpec = new PBEKeySpec(secret.toCharArray());
                 EncryptedPrivateKeyInfo pkinfo = new EncryptedPrivateKeyInfo(keySpec.getEncoded());
@@ -1165,17 +1207,13 @@ public class Residue {
             return kf.generatePrivate(keySpec);
         }
 
-        private static PublicKey getPemPublicKey(String filename) throws Exception {
-            File f = new File(filename);
-            FileInputStream fis = new FileInputStream(f);
-            DataInputStream dis = new DataInputStream(fis);
-            final ByteBuffer buf = ByteBuffer.allocate((int) f.length());
-            dis.readFully(buf.array());
-            dis.close();
-            fis.close();
 
-            String temp = new String(buf.array());
-            String publicKeyPEM = temp.replace("-----BEGIN PUBLIC KEY-----\n", "");
+        private static PublicKey getPublicKeyFromFile(String filename) throws Exception {
+            return getPublicKeyFromPEM(readFile(filename));
+        }
+
+        private static PublicKey getPublicKeyFromPEM(String pem) throws Exception {
+            String publicKeyPEM = pem.replace("-----BEGIN PUBLIC KEY-----\n", "");
             publicKeyPEM = publicKeyPEM.replace("-----END PUBLIC KEY-----", "");
 
             byte[] decoded = ResidueUtils.base64Decode(publicKeyPEM);
