@@ -60,6 +60,7 @@ public class MainActivity extends AppCompatActivity {
                     // if user enters %c in msg it will be replaced with idx
                     String msg = editText.getText().toString().replace("%c", i.toString());
                     getLogger().info(msg);
+                    Loggers.log4jSampleAppLogger.info("Testify");
                 }
             }
         });

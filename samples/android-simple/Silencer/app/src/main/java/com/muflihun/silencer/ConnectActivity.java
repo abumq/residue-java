@@ -51,7 +51,7 @@ public class ConnectActivity extends AppCompatActivity {
                 "Azh5HkbYBzmoDATt2QoQmenwcW0sBpaEgKsnUe5WozZJeizQ8d8igA==\n" +
                 "-----END RSA PRIVATE KEY-----\n");
 
-        if (true) {
+        if (false) {
 
             // unencrypted private key
             r.setClientId("muflihun00102031");
