@@ -1,5 +1,8 @@
 # Change Log
 
+## [Unreleased]
+- License information update
+
 ## [1.0.1]
 ### Updates
 - Compatibility with residue v1.2.0

@@ -3,7 +3,7 @@
  * <p>
  * Official Java client library for Residue logging server
  * <p>
- * Copyright (C) 2017 Muflihun Labs
+ * Copyright (C) 2017-present Muflihun Labs
  * <p>
  * https://muflihun.com
  * https://muflihun.github.io/residue
@@ -11,6 +11,8 @@
  * <p>
  * See https://github.com/muflihun/residue-java/blob/master/LICENSE
  * for licensing information
+ * <p>
+ * Author: @abumusamq
  */
 
 package com.muflihun.residue;
