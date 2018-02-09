@@ -3,7 +3,7 @@
  * <p>
  * Official Java client library for Residue logging server
  * <p>
- * Copyright (C) 2017-present Muflihun Labs
+ * Copyright (C) 2017 Muflihun Labs
  * <p>
  * https://muflihun.com
  * https://muflihun.github.io/residue
@@ -11,8 +11,6 @@
  * <p>
  * See https://github.com/muflihun/residue-java/blob/master/LICENSE
  * for licensing information
- * <p>
- * Author: @abumusamq
  */
 
 package com.muflihun.residue;
@@ -136,7 +134,6 @@ public class Residue {
     private boolean connected = false;
     private boolean connecting = false;
 
-    private String licensee;
     private String serverVersion;
     private String key;
     private String clientId;
@@ -171,10 +168,6 @@ public class Residue {
     private boolean hasProvidedServerKey() {
         return (serverKeyFilename != null && !serverKeyFilename.isEmpty())
                 || (serverKeyPEM != null && !serverKeyPEM.isEmpty());
-    }
-
-    public String getLicensee() {
-        return licensee;
     }
 
     public String getServerVersion() {
@@ -881,7 +874,6 @@ public class Residue {
                                         getInstance().tokenPort = finalConnection.get("token_port").getAsInt();
                                         getInstance().maxBulkSize = finalConnection.get("max_bulk_size").getAsInt();
                                         getInstance().serverFlags = finalConnection.get("flags").getAsInt();
-                                        getInstance().licensee = finalConnection.get("server_info").getAsJsonObject().get("licensee").getAsString();
                                         getInstance().serverVersion = finalConnection.get("server_info").getAsJsonObject().get("version").getAsString();
                                         getInstance().dateCreated = new Date(finalConnection.get("date_created").getAsLong() * 1000);
                                         if (Boolean.TRUE.equals(getInstance().autoBulkParams) && Flag.ALLOW_BULK_LOG_REQUEST.isSet()) {
@@ -1001,7 +993,7 @@ public class Residue {
         }
     }
 
-    private enum LoggingLevels {
+    enum LoggingLevels {
         TRACE(2),
         DEBUG(4),
         FATAL(8),
@@ -1696,8 +1688,8 @@ public class Residue {
     }
 
     private void log(String loggerId, String msg, LoggingLevels level, Integer vlevel) {
-        int baseIdx = 4;
-        StackTraceElement stackItem = getStackItem(5, level, vlevel);
+        int baseIdx = 5;
+        StackTraceElement stackItem = getStackItem(baseIdx, level, vlevel);
         String sourceFilename = stackItem == null ? "" : stackItem.getFileName();
 
         log(getTime(null), loggerId, msg, applicationName, level,
@@ -1707,7 +1699,7 @@ public class Residue {
                 vlevel);
     }
 
-    private void log(Long datetime, String loggerId, String msg,
+    public void log(Long datetime, String loggerId, String msg,
                      String applicationName, LoggingLevels level, String sourceFilename,
                      Integer sourceLineNumber, String sourceMethodName, String threadName,
                      Integer vlevel) {

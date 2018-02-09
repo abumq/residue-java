@@ -55,3 +55,4 @@ public class Log4jAppender extends AbstractAppender {
                 vlevel);
     }
 }
+

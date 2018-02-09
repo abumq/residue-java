@@ -134,7 +134,6 @@ public class Residue {
     private boolean connected = false;
     private boolean connecting = false;
 
-    private String licensee;
     private String serverVersion;
     private String key;
     private String clientId;
@@ -169,10 +168,6 @@ public class Residue {
     private boolean hasProvidedServerKey() {
         return (serverKeyFilename != null && !serverKeyFilename.isEmpty())
                 || (serverKeyPEM != null && !serverKeyPEM.isEmpty());
-    }
-
-    public String getLicensee() {
-        return licensee;
     }
 
     public String getServerVersion() {
@@ -879,7 +874,6 @@ public class Residue {
                                         getInstance().tokenPort = finalConnection.get("token_port").getAsInt();
                                         getInstance().maxBulkSize = finalConnection.get("max_bulk_size").getAsInt();
                                         getInstance().serverFlags = finalConnection.get("flags").getAsInt();
-                                        getInstance().licensee = finalConnection.get("server_info").getAsJsonObject().get("licensee").getAsString();
                                         getInstance().serverVersion = finalConnection.get("server_info").getAsJsonObject().get("version").getAsString();
                                         getInstance().dateCreated = new Date(finalConnection.get("date_created").getAsLong() * 1000);
                                         if (Boolean.TRUE.equals(getInstance().autoBulkParams) && Flag.ALLOW_BULK_LOG_REQUEST.isSet()) {
