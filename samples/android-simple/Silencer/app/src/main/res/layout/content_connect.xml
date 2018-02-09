@@ -16,33 +16,13 @@
 
         <EditText
             android:id="@+id/textHost"
-            android:layout_width="150dp"
+            android:layout_width="239dp"
             android:layout_height="wrap_content"
             android:ems="10"
             android:inputType="textPersonName"
-            android:text="192.168.1.103"
+            android:text="@string/default_host"
             tools:layout_editor_absoluteX="16dp"
             tools:layout_editor_absoluteY="346dp" />
-
-        <EditText
-            android:id="@+id/textPort"
-            android:layout_width="127dp"
-            android:layout_height="42dp"
-            android:ems="10"
-            android:inputType="numberSigned"
-            android:text="8777"
-            tools:layout_editor_absoluteX="240dp"
-            tools:layout_editor_absoluteY="346dp" />
-
-        <Button
-            android:id="@+id/btnReconnect"
-            android:layout_width="125dp"
-            android:layout_height="wrap_content"
-            android:layout_column="1"
-            android:layout_row="1"
-            android:text="Reconnect()"
-            tools:layout_editor_absoluteX="107dp"
-            tools:layout_editor_absoluteY="410dp" />
 
         <Button
             android:id="@+id/button3"
@@ -51,6 +31,28 @@
             android:layout_column="2"
             android:layout_row="1"
             android:text="Cancel" />
+
+        <EditText
+            android:id="@+id/textPort"
+            android:layout_width="127dp"
+            android:layout_height="42dp"
+            android:layout_column="0"
+            android:layout_row="1"
+            android:ems="10"
+            android:inputType="numberSigned"
+            android:text="@string/default_port"
+            tools:layout_editor_absoluteX="240dp"
+            tools:layout_editor_absoluteY="346dp" />
+
+        <Button
+            android:id="@+id/btnReconnect"
+            android:layout_width="125dp"
+            android:layout_height="wrap_content"
+            android:layout_column="2"
+            android:layout_row="0"
+            android:text="Reconnect()"
+            tools:layout_editor_absoluteX="107dp"
+            tools:layout_editor_absoluteY="410dp" />
 
     </GridLayout>
 </android.support.constraint.ConstraintLayout>

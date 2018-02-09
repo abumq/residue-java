@@ -1,16 +1,27 @@
 /**
  * Residue.java
- * <p>
+ *
  * Official Java client library for Residue logging server
- * <p>
- * Copyright (C) 2017 Muflihun Labs
- * <p>
+ *
+ * Copyright (C) 2017-present Muflihun Labs
+ *
  * https://muflihun.com
  * https://muflihun.github.io/residue
  * https://github.com/muflihun/residue-java
- * <p>
- * See https://github.com/muflihun/residue-java/blob/master/LICENSE
- * for licensing information
+ *
+ * Author: @abumusamq
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package com.muflihun.residue;
@@ -55,6 +66,7 @@ import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
@@ -92,7 +104,7 @@ import org.bouncycastle.asn1.pkcs.PKCSObjectIdentifiers;
  */
 public class Residue {
 
-    private static final Integer TOUCH_THRESHOLD = 120; // should always be min(client_age)
+    private static final Integer TOUCH_THRESHOLD = 60; // should always be min(client_age)
     private static final String DEFAULT_ACCESS_CODE = "default";
     private static final Integer ALLOCATION_BUFFER_SIZE = 4098;
 
@@ -125,14 +137,15 @@ public class Residue {
 
     private String privateKeySecret;
     private String privateKeyFilename;
+    private String privateKeyPEM;
     private PrivateKey privateKey;
 
     private String serverKeyFilename;
+    private String serverKeyPEM;
 
     private boolean connected = false;
     private boolean connecting = false;
 
-    private String licensee;
     private String serverVersion;
     private String key;
     private String clientId;
@@ -159,12 +172,22 @@ public class Residue {
     private Residue() {
     }
 
-    public String getLicensee() {
-        return licensee;
+    private boolean hasProvidedClientKey() {
+        return (privateKeyFilename != null && !privateKeyFilename.isEmpty())
+                || (privateKeyPEM != null && !privateKeyPEM.isEmpty());
+    }
+
+    private boolean hasProvidedServerKey() {
+        return (serverKeyFilename != null && !serverKeyFilename.isEmpty())
+                || (serverKeyPEM != null && !serverKeyPEM.isEmpty());
     }
 
     public String getServerVersion() {
         return serverVersion;
+    }
+
+    public PrintStream getPrintStream() {
+        return printStream;
     }
 
     public String getHost() {
@@ -246,6 +269,10 @@ public class Residue {
         this.privateKeyFilename = privateKeyFilename;
     }
 
+    public void setPrivateKeyPEM(final String privateKeyPEM) {
+        this.privateKeyPEM = privateKeyPEM;
+    }
+
     public void setPrivateKeySecret(final String privateKeySecret) {
         this.privateKeySecret = privateKeySecret;
     }
@@ -256,6 +283,10 @@ public class Residue {
 
     public void setServerKeyFilename(final String serverKeyFilename) {
         this.serverKeyFilename = serverKeyFilename;
+    }
+
+    public void setServerKeyPEM(final String serverKeyPEM) {
+        this.serverKeyPEM = serverKeyPEM;
     }
 
     public void setApplicationName(final String applicationName) {
@@ -358,17 +389,24 @@ public class Residue {
             setServerKeyFilename(jsonObject.get("server_public_key").getAsString());
         }
 
+        if (jsonObject.has("server_public_key_pem")) {
+            setServerKeyPEM(jsonObject.get("server_public_key_pem").getAsString());
+        }
+
         if (jsonObject.has("client_id")) {
             setClientId(jsonObject.get("client_id").getAsString());
         }
 
         if (jsonObject.has("client_private_key")) {
-
             setPrivateKeyFilename(jsonObject.get("client_private_key").getAsString());
+        }
 
-            if (jsonObject.has("client_key_secret")) {
-                setPrivateKeySecret(jsonObject.get("client_key_secret").getAsString());
-            }
+        if (jsonObject.has("client_private_key_pem")) {
+            setPrivateKeyPEM(jsonObject.get("client_private_key_pem").getAsString());
+        }
+
+        if (jsonObject.has("client_key_secret")) {
+            setPrivateKeySecret(jsonObject.get("client_key_secret").getAsString());
         }
     }
 
@@ -649,10 +687,27 @@ public class Residue {
         }
     }
 
+    /**
+     * Print stream to enable System.out family. Simply do following to enable
+     * <code>
+     *     Residue.getInstance().setDefaultLoggerId({default_logger});
+     *     System.setOut(Residue.getInstance().getPrintStream());
+     * </code>
+     */
     public static class ResiduePrintStream extends PrintStream {
 
         private ResiduePrintStream(PrintStream org) {
             super(org);
+        }
+
+        @Override
+        public void println(Object line) {
+            if (line == null) {
+                Residue.getInstance().getLogger().info("NULL");
+            } else {
+                Residue.getInstance().getLogger().info(line.toString());
+            }
+            super.println(line);
         }
 
         @Override
@@ -661,17 +716,91 @@ public class Residue {
             super.println(line);
         }
 
+        @Override
         public void println(int line) {
-            Residue.getInstance().getLogger().info(String.valueOf(line));
             this.println(String.valueOf(line));
         }
 
+        @Override
         public void println(double line) {
-            Residue.getInstance().getLogger().info(String.valueOf(line));
             this.println(String.valueOf(line));
         }
 
-        // implement more later ...
+        @Override
+        public void println(boolean line) {
+            this.println(String.valueOf(line));
+        }
+
+        @Override
+        public void println(char line) {
+            this.println(String.valueOf(line));
+        }
+
+        @Override
+        public void println(char[] line) {
+            this.println(String.valueOf(line));
+        }
+
+        @Override
+        public void println(float line) {
+            this.println(String.valueOf(line));
+        }
+
+        @Override
+        public void println(long line) {
+            this.println(String.valueOf(line));
+        }
+
+        @Override
+        public void print(Object line) {
+            if (line == null) {
+                Residue.getInstance().getLogger().info("NULL");
+            } else {
+                Residue.getInstance().getLogger().info(line.toString());
+            }
+            super.print(line);
+        }
+
+        @Override
+        public void print(String line) {
+            Residue.getInstance().getLogger().info(line);
+            super.print(line);
+        }
+
+        @Override
+        public void print(int line) {
+            this.print(String.valueOf(line));
+        }
+
+        @Override
+        public void print(double line) {
+            this.print(String.valueOf(line));
+        }
+
+        @Override
+        public void print(boolean line) {
+            this.print(String.valueOf(line));
+        }
+
+        @Override
+        public void print(char line) {
+            this.print(String.valueOf(line));
+        }
+
+        @Override
+        public void print(char[] line) {
+            this.print(String.valueOf(line));
+        }
+
+        @Override
+        public void print(float line) {
+            this.print(String.valueOf(line));
+        }
+
+        @Override
+        public void print(long line) {
+            this.print(String.valueOf(line));
+        }
     }
 
     /**
@@ -748,9 +877,12 @@ public class Residue {
 
         final CountDownLatch latch = new CountDownLatch(3); // 3 connection sockets
         if (getInstance().clientId != null && !getInstance().clientId.isEmpty()
-                && getInstance().privateKeyFilename != null
-                && !getInstance().privateKeyFilename.isEmpty()) {
-            getInstance().privateKey = ResidueUtils.getPemPrivateKey(getInstance().privateKeyFilename, getInstance().privateKeySecret);
+                && getInstance().hasProvidedClientKey()) {
+            if (getInstance().privateKeyPEM != null && !getInstance().privateKeyPEM.isEmpty()) {
+                getInstance().privateKey = ResidueUtils.getPrivateKeyFromPEM(getInstance().privateKeyPEM, getInstance().privateKeySecret);
+            } else {
+                getInstance().privateKey = ResidueUtils.getPrivateKeyFromFile(getInstance().privateKeyFilename, getInstance().privateKeySecret);
+            }
         }
 
         getInstance().connectionClient.connect(getInstance().host, getInstance().port, new ResponseHandler("connectionClient.reconnect") {
@@ -763,8 +895,7 @@ public class Residue {
                 j.addProperty("key_size", getInstance().keySize);
                 if (getInstance().clientId != null
                         && !getInstance().clientId.isEmpty()
-                        && getInstance().privateKeyFilename != null
-                        && !getInstance().privateKeyFilename.isEmpty()
+                        && getInstance().hasProvidedClientKey()
                         && getInstance().rsaKeySize != null) {
                     j.addProperty("client_id", getInstance().clientId);
                 } else {
@@ -776,9 +907,14 @@ public class Residue {
 
                 String request = new Gson().toJson(j);
 
-                if (getInstance().serverKeyFilename != null && !getInstance().serverKeyFilename.isEmpty()) {
+                if (getInstance().hasProvidedServerKey()) {
                     try {
-                        final PublicKey publicKey = ResidueUtils.getPemPublicKey(getInstance().serverKeyFilename);
+                        final PublicKey publicKey;
+                        if (getInstance().serverKeyPEM != null && !getInstance().serverKeyPEM.isEmpty()) {
+                            publicKey = ResidueUtils.getPublicKeyFromPEM(getInstance().serverKeyPEM);
+                        } else {
+                            publicKey = ResidueUtils.getPublicKeyFromFile(getInstance().serverKeyFilename);
+                        }
                         request = ResidueUtils.base64Encode(ResidueUtils.encryptRSA(request, publicKey));
                     } catch (Exception e) {
                         ResidueUtils.log("Invalid server public key, ignoring and trying with plain connection! " + e.getMessage());
@@ -845,7 +981,6 @@ public class Residue {
                                         getInstance().tokenPort = finalConnection.get("token_port").getAsInt();
                                         getInstance().maxBulkSize = finalConnection.get("max_bulk_size").getAsInt();
                                         getInstance().serverFlags = finalConnection.get("flags").getAsInt();
-                                        getInstance().licensee = finalConnection.get("server_info").getAsJsonObject().get("licensee").getAsString();
                                         getInstance().serverVersion = finalConnection.get("server_info").getAsJsonObject().get("version").getAsString();
                                         getInstance().dateCreated = new Date(finalConnection.get("date_created").getAsLong() * 1000);
                                         if (Boolean.TRUE.equals(getInstance().autoBulkParams) && Flag.ALLOW_BULK_LOG_REQUEST.isSet()) {
@@ -883,9 +1018,6 @@ public class Residue {
                                                 @Override
                                                 public void handle(String data, boolean hasError) {
                                                     logForDebugging();
-                                                    // uncomment following lines
-                                                    // to enable std out to residue server instead
-                                                    //System.setOut(getInstance().printStream);
                                                     latch.countDown();
                                                 }
                                             });
@@ -908,7 +1040,8 @@ public class Residue {
             }
         });
 
-        latch.await(10L, TimeUnit.SECONDS);
+        ResidueUtils.debugLog("Waiting for residue connection...");
+        latch.await(5L, TimeUnit.SECONDS);
 
         if (getInstance().connected) {
             try {
@@ -920,6 +1053,8 @@ public class Residue {
             } catch (Exception e) {
                 ResidueUtils.log("ERROR: Unable to start dispatcher thread [" + e.getMessage() + "]");
             }
+        } else {
+            ResidueUtils.log("ERROR: Residue connection timeout [5s]");
         }
         return getInstance().connected;
     }
@@ -928,16 +1063,22 @@ public class Residue {
 
         private String id;
 
-        public ResponseHandler(String id) {
+        private ResponseHandler(String id) {
             this.id = id;
         }
 
         public abstract void handle(String data, boolean hasError);
 
+        /**
+         * For residue-java developers only
+         */
         public void logForDebugging() {
             //ResidueUtils.debugLog("ResponseHandler::handle " + this.id);
         }
 
+        /**
+         * For residue-java developers only
+         */
         public void logForDebugging(final String data) {
             logForDebugging();
             //ResidueUtils.debugLog("ResponseHandler::handle::data = " + data);
@@ -1112,19 +1253,25 @@ public class Residue {
      */
     private static class ResidueUtils {
 
+        /**
+         * Log for debugging residue-java
+         */
         private static void log(Object msg) {
             /*synchronized (System.out) {
                 System.out.println(msg);
             }*/
         }
 
+        /**
+         * Log for debugging residue-java
+         */
         private static void debugLog(Object msg) {
             /*synchronized (System.out) {
                 System.out.println(msg);
             }*/
         }
 
-        private static PrivateKey getPemPrivateKey(String filename, String secret) throws Exception {
+        private static String readFile(String filename) throws Exception {
             File f = new File(filename);
             FileInputStream fis = new FileInputStream(f);
             DataInputStream dis = new DataInputStream(fis);
@@ -1133,8 +1280,15 @@ public class Residue {
             dis.close();
             fis.close();
 
-            String temp = new String(buf.array());
-            String privKeyPEM = temp.replace("-----BEGIN RSA PRIVATE KEY-----", "");
+            return new String(buf.array());
+        }
+
+        private static PrivateKey getPrivateKeyFromFile(String filename, String secret) throws Exception {
+            return getPrivateKeyFromPEM(readFile(filename), secret);
+        }
+
+        private static PrivateKey getPrivateKeyFromPEM(String pem, String secret) throws Exception {
+            String privKeyPEM = pem.replace("-----BEGIN RSA PRIVATE KEY-----", "");
             privKeyPEM = privKeyPEM.replace("-----END RSA PRIVATE KEY-----", "");
             privKeyPEM = privKeyPEM.trim();
 
@@ -1155,6 +1309,7 @@ public class Residue {
             KeyFactory kf = KeyFactory.getInstance("RSA");
 
             if (secret != null && !secret.isEmpty()) {
+                boolean f = keySpec.getEncoded() == privKey;
                 // FIXME: Encrypted private keys not working
                 PBEKeySpec pbeSpec = new PBEKeySpec(secret.toCharArray());
                 EncryptedPrivateKeyInfo pkinfo = new EncryptedPrivateKeyInfo(keySpec.getEncoded());
@@ -1165,17 +1320,13 @@ public class Residue {
             return kf.generatePrivate(keySpec);
         }
 
-        private static PublicKey getPemPublicKey(String filename) throws Exception {
-            File f = new File(filename);
-            FileInputStream fis = new FileInputStream(f);
-            DataInputStream dis = new DataInputStream(fis);
-            final ByteBuffer buf = ByteBuffer.allocate((int) f.length());
-            dis.readFully(buf.array());
-            dis.close();
-            fis.close();
 
-            String temp = new String(buf.array());
-            String publicKeyPEM = temp.replace("-----BEGIN PUBLIC KEY-----\n", "");
+        private static PublicKey getPublicKeyFromFile(String filename) throws Exception {
+            return getPublicKeyFromPEM(readFile(filename));
+        }
+
+        private static PublicKey getPublicKeyFromPEM(String pem) throws Exception {
+            String publicKeyPEM = pem.replace("-----BEGIN PUBLIC KEY-----\n", "");
             publicKeyPEM = publicKeyPEM.replace("-----END PUBLIC KEY-----", "");
 
             byte[] decoded = ResidueUtils.base64Decode(publicKeyPEM);
@@ -1243,7 +1394,7 @@ public class Residue {
                 cipher.init(Cipher.ENCRYPT_MODE, keySpec, ivSpec);
 
                 byte[] encrypted = cipher.doFinal(request.getBytes());
-                return randomIV + ":" + Residue.getInstance().clientId + ":" + new String(ResidueUtils.base64Encode(encrypted));
+                return randomIV + ":" + Residue.getInstance().clientId + ":" + ResidueUtils.base64Encode(encrypted);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -1376,7 +1527,8 @@ public class Residue {
                     latch.countDown();
                 }
             });
-            latch.await(10L, TimeUnit.SECONDS);
+            ResidueUtils.debugLog("Waiting 5s for token...");
+            latch.await(5L, TimeUnit.SECONDS);
         }
 
     }
@@ -1656,8 +1808,8 @@ public class Residue {
     }
 
     private void log(String loggerId, String msg, LoggingLevels level, Integer vlevel) {
-        int baseIdx = 4;
-        StackTraceElement stackItem = getStackItem(5, level, vlevel);
+        int baseIdx = 5;
+        StackTraceElement stackItem = getStackItem(baseIdx, level, vlevel);
         String sourceFilename = stackItem == null ? "" : stackItem.getFileName();
 
         log(getTime(null), loggerId, msg, applicationName, level,
@@ -1667,7 +1819,7 @@ public class Residue {
                 vlevel);
     }
 
-    private void log(Long datetime, String loggerId, String msg,
+    public void log(Long datetime, String loggerId, String msg,
                      String applicationName, LoggingLevels level, String sourceFilename,
                      Integer sourceLineNumber, String sourceMethodName, String threadName,
                      Integer vlevel) {
@@ -1747,7 +1899,8 @@ public class Residue {
         log(getTime(record.getMillis()),
                 loggerName,
                 record.getMessage(),
-                applicationName, level,
+                applicationName,
+                level,
                 record.getSourceClassName(),
                 lineNumber,
                 record.getSourceMethodName(),

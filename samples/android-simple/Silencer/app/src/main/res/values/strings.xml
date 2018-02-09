@@ -2,4 +2,6 @@
     <string name="app_name">Silencer</string>
     <string name="action_reconnect">Reconnect</string>
     <string name="title_activity_connect">ConnectActivity</string>
+    <string name="default_host">192.168.1.100</string>
+    <string name="default_port">8777</string>
 </resources>
