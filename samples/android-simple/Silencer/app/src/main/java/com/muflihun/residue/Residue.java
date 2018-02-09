@@ -1,16 +1,27 @@
 /**
  * Residue.java
- * <p>
+ *
  * Official Java client library for Residue logging server
- * <p>
- * Copyright (C) 2017 Muflihun Labs
- * <p>
+ *
+ * Copyright (C) 2017-present Muflihun Labs
+ *
  * https://muflihun.com
  * https://muflihun.github.io/residue
  * https://github.com/muflihun/residue-java
- * <p>
- * See https://github.com/muflihun/residue-java/blob/master/LICENSE
- * for licensing information
+ *
+ * Author: @abumusamq
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package com.muflihun.residue;
@@ -92,7 +103,7 @@ import org.bouncycastle.asn1.pkcs.PKCSObjectIdentifiers;
  */
 public class Residue {
 
-    private static final Integer TOUCH_THRESHOLD = 120; // should always be min(client_age)
+    private static final Integer TOUCH_THRESHOLD = 60; // should always be min(client_age)
     private static final String DEFAULT_ACCESS_CODE = "default";
     private static final Integer ALLOCATION_BUFFER_SIZE = 4098;
 
@@ -936,7 +947,8 @@ public class Residue {
             }
         });
 
-        latch.await(10L, TimeUnit.SECONDS);
+        ResidueUtils.debugLog("Waiting for residue connection...");
+        latch.await(5L, TimeUnit.SECONDS);
 
         if (getInstance().connected) {
             try {
@@ -948,6 +960,8 @@ public class Residue {
             } catch (Exception e) {
                 ResidueUtils.log("ERROR: Unable to start dispatcher thread [" + e.getMessage() + "]");
             }
+        } else {
+            ResidueUtils.log("ERROR: Residue connection timeout [5s]");
         }
         return getInstance().connected;
     }
@@ -956,16 +970,22 @@ public class Residue {
 
         private String id;
 
-        public ResponseHandler(String id) {
+        private ResponseHandler(String id) {
             this.id = id;
         }
 
         public abstract void handle(String data, boolean hasError);
 
+        /**
+         * For residue-java developers only
+         */
         public void logForDebugging() {
             //ResidueUtils.debugLog("ResponseHandler::handle " + this.id);
         }
 
+        /**
+         * For residue-java developers only
+         */
         public void logForDebugging(final String data) {
             logForDebugging();
             //ResidueUtils.debugLog("ResponseHandler::handle::data = " + data);
@@ -993,7 +1013,7 @@ public class Residue {
         }
     }
 
-    enum LoggingLevels {
+    private enum LoggingLevels {
         TRACE(2),
         DEBUG(4),
         FATAL(8),
@@ -1140,12 +1160,18 @@ public class Residue {
      */
     private static class ResidueUtils {
 
+        /**
+         * Log for debugging residue-java
+         */
         private static void log(Object msg) {
             /*synchronized (System.out) {
                 System.out.println(msg);
             }*/
         }
 
+        /**
+         * Log for debugging residue-java
+         */
         private static void debugLog(Object msg) {
             /*synchronized (System.out) {
                 System.out.println(msg);
@@ -1275,7 +1301,7 @@ public class Residue {
                 cipher.init(Cipher.ENCRYPT_MODE, keySpec, ivSpec);
 
                 byte[] encrypted = cipher.doFinal(request.getBytes());
-                return randomIV + ":" + Residue.getInstance().clientId + ":" + new String(ResidueUtils.base64Encode(encrypted));
+                return randomIV + ":" + Residue.getInstance().clientId + ":" + ResidueUtils.base64Encode(encrypted);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -1408,7 +1434,8 @@ public class Residue {
                     latch.countDown();
                 }
             });
-            latch.await(10L, TimeUnit.SECONDS);
+            ResidueUtils.debugLog("Waiting 5s for token...");
+            latch.await(5L, TimeUnit.SECONDS);
         }
 
     }
@@ -1779,7 +1806,8 @@ public class Residue {
         log(getTime(record.getMillis()),
                 loggerName,
                 record.getMessage(),
-                applicationName, level,
+                applicationName,
+                level,
                 record.getSourceClassName(),
                 lineNumber,
                 record.getSourceMethodName(),
