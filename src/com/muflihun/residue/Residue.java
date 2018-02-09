@@ -66,6 +66,7 @@ import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
@@ -183,6 +184,10 @@ public class Residue {
 
     public String getServerVersion() {
         return serverVersion;
+    }
+
+    public PrintStream getPrintStream() {
+        return printStream;
     }
 
     public String getHost() {
@@ -682,10 +687,27 @@ public class Residue {
         }
     }
 
+    /**
+     * Print stream to enable System.out family. Simply do following to enable
+     * <code>
+     *     Residue.getInstance().setDefaultLoggerId({default_logger});
+     *     System.setOut(Residue.getInstance().getPrintStream());
+     * </code>
+     */
     public static class ResiduePrintStream extends PrintStream {
 
         private ResiduePrintStream(PrintStream org) {
             super(org);
+        }
+
+        @Override
+        public void println(Object line) {
+            if (line == null) {
+                Residue.getInstance().getLogger().info("NULL");
+            } else {
+                Residue.getInstance().getLogger().info(line.toString());
+            }
+            super.println(line);
         }
 
         @Override
@@ -694,17 +716,91 @@ public class Residue {
             super.println(line);
         }
 
+        @Override
         public void println(int line) {
-            Residue.getInstance().getLogger().info(String.valueOf(line));
             this.println(String.valueOf(line));
         }
 
+        @Override
         public void println(double line) {
-            Residue.getInstance().getLogger().info(String.valueOf(line));
             this.println(String.valueOf(line));
         }
 
-        // implement more later ...
+        @Override
+        public void println(boolean line) {
+            this.println(String.valueOf(line));
+        }
+
+        @Override
+        public void println(char line) {
+            this.println(String.valueOf(line));
+        }
+
+        @Override
+        public void println(char[] line) {
+            this.println(String.valueOf(line));
+        }
+
+        @Override
+        public void println(float line) {
+            this.println(String.valueOf(line));
+        }
+
+        @Override
+        public void println(long line) {
+            this.println(String.valueOf(line));
+        }
+
+        @Override
+        public void print(Object line) {
+            if (line == null) {
+                Residue.getInstance().getLogger().info("NULL");
+            } else {
+                Residue.getInstance().getLogger().info(line.toString());
+            }
+            super.print(line);
+        }
+
+        @Override
+        public void print(String line) {
+            Residue.getInstance().getLogger().info(line);
+            super.print(line);
+        }
+
+        @Override
+        public void print(int line) {
+            this.print(String.valueOf(line));
+        }
+
+        @Override
+        public void print(double line) {
+            this.print(String.valueOf(line));
+        }
+
+        @Override
+        public void print(boolean line) {
+            this.print(String.valueOf(line));
+        }
+
+        @Override
+        public void print(char line) {
+            this.print(String.valueOf(line));
+        }
+
+        @Override
+        public void print(char[] line) {
+            this.print(String.valueOf(line));
+        }
+
+        @Override
+        public void print(float line) {
+            this.print(String.valueOf(line));
+        }
+
+        @Override
+        public void print(long line) {
+            this.print(String.valueOf(line));
+        }
     }
 
     /**
@@ -922,9 +1018,6 @@ public class Residue {
                                                 @Override
                                                 public void handle(String data, boolean hasError) {
                                                     logForDebugging();
-                                                    // uncomment following lines
-                                                    // to enable std out to residue server instead
-                                                    //System.setOut(getInstance().printStream);
                                                     latch.countDown();
                                                 }
                                             });

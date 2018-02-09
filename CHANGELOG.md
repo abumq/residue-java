@@ -6,6 +6,7 @@
 
 ### Fixed
 - Fixed crash after license information from server is no longer available
+- `ResiduePrintStream` class completed
 
 ## [1.0.1]
 ### Updates

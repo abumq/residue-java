@@ -47,6 +47,10 @@ public class MainActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+        // enable std out
+        Residue.getInstance().setDefaultLoggerId("sample-app");
+        System.setOut(Residue.getInstance().getPrintStream());
+
         final EditText editText = (EditText) findViewById(R.id.logMsg);
         final EditText numberOfMsgs = (EditText) findViewById(R.id.txtNumberOfMsgs);
 
@@ -55,6 +59,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 showMessageIfNotConnected(view);
+
                 Integer count = Integer.valueOf(numberOfMsgs.getText().toString());
                 for (Integer i = 1; i <= count; ++i) {
                     // if user enters %c in msg it will be replaced with idx
@@ -93,6 +98,30 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
+
+
+        Button btnSysOut = (Button) findViewById(R.id.logSys);
+        btnSysOut.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                showMessageIfNotConnected(view);
+
+                // because of System.setOut(Residue.getInstance().getPrintStream()); it will also log to residue
+                System.out.println("from System.out.println");
+
+                System.out.println(true);
+                System.out.println(1);
+                System.out.println(2.0);
+
+                Integer count = Integer.valueOf(numberOfMsgs.getText().toString());
+                for (Integer i = 1; i <= count; ++i) {
+                    // if user enters %c in msg it will be replaced with idx
+                    String msg = editText.getText().toString().replace("%c", i.toString());
+                    System.out.printf("%s", msg);
+                }
+            }
+        });
+
     }
 
     @Override
