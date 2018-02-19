@@ -87,6 +87,7 @@ Check out [simple sample](/simple-sample) or [Android sample](/samples/android-s
 ## License
 ```
 Copyright 2017-present Muflihun Labs
+Copyright 2017-present @abumusamq
 
 https://github.com/muflihun/
 https://muflihun.com
