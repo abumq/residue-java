@@ -128,7 +128,6 @@ public class Residue {
     private Boolean useTimeOffsetIfNotUtc = false;
     private Integer dispatchDelay = 1;
     private Boolean autoBulkParams = true;
-    private Boolean plainRequest = false;
     private Boolean bulkDispatch = false;
     private Integer bulkSize = 0;
     private String defaultLoggerId = "default";
@@ -277,10 +276,6 @@ public class Residue {
         this.privateKeySecret = privateKeySecret;
     }
 
-    public void setPlainRequest(final Boolean plainRequest) {
-        this.plainRequest = plainRequest;
-    }
-
     public void setServerKeyFilename(final String serverKeyFilename) {
         this.serverKeyFilename = serverKeyFilename;
     }
@@ -355,10 +350,6 @@ public class Residue {
 
         if (jsonObject.has("main_thread_id")) {
             Thread.currentThread().setName(jsonObject.get("main_thread_id").getAsString());
-        }
-
-        if (jsonObject.has("plain_request")) {
-            setPlainRequest(jsonObject.get("plain_request").getAsBoolean());
         }
 
         if (jsonObject.has("access_codes")) {
@@ -1666,10 +1657,6 @@ public class Residue {
                             j = backlog.pop();
                             if (j != null) {
                                 loggerIds.add(j.get("logger").getAsString());
-                                if (Boolean.TRUE.equals(plainRequest)
-                                        && Flag.ALLOW_PLAIN_LOG_REQUEST.isSet()) {
-                                    j.addProperty("client_id", clientId);
-                                }
                                 bulkJ.add(j);
                             }
                         }
@@ -1726,8 +1713,7 @@ public class Residue {
                             ResidueUtils.log("Failed to compress: " + e.getMessage());
                         }
                     }
-                    String r = Boolean.TRUE.equals(plainRequest)
-                            && Flag.ALLOW_PLAIN_LOG_REQUEST.isSet() ? request : ResidueUtils.encrypt(request, key);
+                    String r = ResidueUtils.encrypt(request, key);
                     getInstance().loggingClient.send(r, new ResponseHandler("loggingClient.send") {
                         @Override
                         public void handle(String data, boolean hasError) {

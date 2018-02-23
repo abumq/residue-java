@@ -1,5 +1,8 @@
 # Change Log
 
+## [1.1.1] - 23-02-2018
+- Removed plain request
+
 ## [1.1.0] - 09-02-2018
 ### Updates
 - License information update
