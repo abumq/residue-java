@@ -21,35 +21,37 @@ public class ConnectActivity extends AppCompatActivity {
         Residue r = Residue.getInstance();
         System.out.println("reconnect()...");
 
-        // unencrypted private key
-        r.setClientId("muflihun00102030");
-        r.setPrivateKeyPEM("-----BEGIN RSA PRIVATE KEY-----\n" +
-                "MIIEpAIBAAKCAQEA7FRIrSdEHB0sLds0sHzdZtSeN6RUHtvPRhjk9wWThhq7b0OV\n" +
-                "BToWLHip9Jrwg69sVn8MtYaYbd9KtZSA9rHdYOEpplunphNwzq9BEQMsqs2ELFr6\n" +
-                "Eh1dwIPH2UcOeyd2W0OFYYjLdDXOUrgBz8LEliP1c0IMKc8gU4Z1welgDn60I4r6\n" +
-                "nVoeMBRR95xkcUyFuJ1Rw3Gg6z7cFYYqseJNGF5fguL0gqoBM+ZaZUieINx+NieW\n" +
-                "hzTdICcxXEIGb4m81edAo2HSif2q6777LUoYWefuZudbHyM5NtUZzBXwETXLArvK\n" +
-                "lOcdayIRKVfb/Fz7a/BRo0yG/rl/rjhPWzcTqQIBAwKCAQEAnY2FyMTYEr4dc+d4\n" +
-                "daiTmeMUJRg4FJKKLrtDT1kNBBHSSi0OA3wOyFBxTbygV8pIOaoIeQRlnpTceQ2r\n" +
-                "TyE+QJYbxD0abregicorYKzIcd5YHZH8DBOT1a0v5i9e/MT5ki0DllsyTXk0NyVW\n" +
-                "ioHYZBf494FdcTTAN675K/DqtFMwEGG5gk+ycReZeXsxCw8rAJedkE8I1KTs9wuH\n" +
-                "w10XK179PVc8JZqAH0elPRjfJ5Cq6bUl4Dd3rjbCd/OHw6pbb0Fac2Gsv4x3D/e0\n" +
-                "1dEdqgDLhJltnj0sZWCsQAm5uE3DuKCIgqkNJn5LPgSgZkuvxY/wtKkZzJJov4HH\n" +
-                "PAWagwKBgQD7JU1/Ib2aI0GwaB8kEvfSk65ZJ4HHnmGBiBM0cMqhvC74x4pTuddh\n" +
-                "wZyjtWMoumxD5pL+o874OyRLtwk3ArT1EJsrhRhXgWNyt3F9rXDO5mNMgRgRel5h\n" +
-                "El0dBPXzAIIstvhwL8raeC2WA9TCZSIstIHWDnu1jOsU41EeN5FFgwKBgQDw5arl\n" +
-                "OCT4Yy87WUR2zb3ypAuMQ3lMDeX3GuGqnAwImyDq31XGkGrfQ14+1EAmqxc58QTf\n" +
-                "ExKxX7DB8UuDx1U+nmoNcTb36UeFnFnuPx+c9INwnuklN2kVjGb6ZxFmfD74ttKN\n" +
-                "oR6vOTcKSHwo/clHDxaShdMqvvLNq6SGSZ1mYwKBgQCnbjOqFn5mwivK8BTCt0/h\n" +
-                "t8mQxQEvvuursAzNoIcWfXSl2lw30TpBK73CeOzF0Z2CmbdUbTSlfMLdJLDPVyNO\n" +
-                "CxIdA2WPq5ehz6D+c6CJ7uzdq2Vg/D7rYZNorflMqwFzJKWgH9yRpXO5V+MsQ2wd\n" +
-                "zavkCafOXfIN7OC+z7YuVwKBgQCgmRyY0Bill3TSO4L53n6hwrJdglDdXplPZ0Ec\n" +
-                "aAgFvMCclOPZtZyU15Qp4tVvHLomoK3qDLcg6nXWoN0ChON/FEazoM9P8NpZEuae\n" +
-                "1L+9+FegafDDekYOXZn8RLZEUtSlzzcJFhR00M9cMFLF/oYvX2RhrozHKfczx8ME\n" +
-                "MROZlwKBgQCmPgUCediRMlRrtYiLhsHhLJ11fSPDMcDLAn1CyNRqbUv2vm77rqf8\n" +
-                "SpzrO1MV7+Myv7mmnLwleG3jROKaB8zUHPqLQaeIV9M3dQs/iaPsu5NQ63TRzDK8\n" +
-                "Azh5HkbYBzmoDATt2QoQmenwcW0sBpaEgKsnUe5WozZJeizQ8d8igA==\n" +
-                "-----END RSA PRIVATE KEY-----\n");
+        if (false) {
+            // unencrypted private key
+            r.setClientId("muflihun00102030");
+            r.setPrivateKeyPEM("-----BEGIN RSA PRIVATE KEY-----\n" +
+                    "MIIEpAIBAAKCAQEA7FRIrSdEHB0sLds0sHzdZtSeN6RUHtvPRhjk9wWThhq7b0OV\n" +
+                    "BToWLHip9Jrwg69sVn8MtYaYbd9KtZSA9rHdYOEpplunphNwzq9BEQMsqs2ELFr6\n" +
+                    "Eh1dwIPH2UcOeyd2W0OFYYjLdDXOUrgBz8LEliP1c0IMKc8gU4Z1welgDn60I4r6\n" +
+                    "nVoeMBRR95xkcUyFuJ1Rw3Gg6z7cFYYqseJNGF5fguL0gqoBM+ZaZUieINx+NieW\n" +
+                    "hzTdICcxXEIGb4m81edAo2HSif2q6777LUoYWefuZudbHyM5NtUZzBXwETXLArvK\n" +
+                    "lOcdayIRKVfb/Fz7a/BRo0yG/rl/rjhPWzcTqQIBAwKCAQEAnY2FyMTYEr4dc+d4\n" +
+                    "daiTmeMUJRg4FJKKLrtDT1kNBBHSSi0OA3wOyFBxTbygV8pIOaoIeQRlnpTceQ2r\n" +
+                    "TyE+QJYbxD0abregicorYKzIcd5YHZH8DBOT1a0v5i9e/MT5ki0DllsyTXk0NyVW\n" +
+                    "ioHYZBf494FdcTTAN675K/DqtFMwEGG5gk+ycReZeXsxCw8rAJedkE8I1KTs9wuH\n" +
+                    "w10XK179PVc8JZqAH0elPRjfJ5Cq6bUl4Dd3rjbCd/OHw6pbb0Fac2Gsv4x3D/e0\n" +
+                    "1dEdqgDLhJltnj0sZWCsQAm5uE3DuKCIgqkNJn5LPgSgZkuvxY/wtKkZzJJov4HH\n" +
+                    "PAWagwKBgQD7JU1/Ib2aI0GwaB8kEvfSk65ZJ4HHnmGBiBM0cMqhvC74x4pTuddh\n" +
+                    "wZyjtWMoumxD5pL+o874OyRLtwk3ArT1EJsrhRhXgWNyt3F9rXDO5mNMgRgRel5h\n" +
+                    "El0dBPXzAIIstvhwL8raeC2WA9TCZSIstIHWDnu1jOsU41EeN5FFgwKBgQDw5arl\n" +
+                    "OCT4Yy87WUR2zb3ypAuMQ3lMDeX3GuGqnAwImyDq31XGkGrfQ14+1EAmqxc58QTf\n" +
+                    "ExKxX7DB8UuDx1U+nmoNcTb36UeFnFnuPx+c9INwnuklN2kVjGb6ZxFmfD74ttKN\n" +
+                    "oR6vOTcKSHwo/clHDxaShdMqvvLNq6SGSZ1mYwKBgQCnbjOqFn5mwivK8BTCt0/h\n" +
+                    "t8mQxQEvvuursAzNoIcWfXSl2lw30TpBK73CeOzF0Z2CmbdUbTSlfMLdJLDPVyNO\n" +
+                    "CxIdA2WPq5ehz6D+c6CJ7uzdq2Vg/D7rYZNorflMqwFzJKWgH9yRpXO5V+MsQ2wd\n" +
+                    "zavkCafOXfIN7OC+z7YuVwKBgQCgmRyY0Bill3TSO4L53n6hwrJdglDdXplPZ0Ec\n" +
+                    "aAgFvMCclOPZtZyU15Qp4tVvHLomoK3qDLcg6nXWoN0ChON/FEazoM9P8NpZEuae\n" +
+                    "1L+9+FegafDDekYOXZn8RLZEUtSlzzcJFhR00M9cMFLF/oYvX2RhrozHKfczx8ME\n" +
+                    "MROZlwKBgQCmPgUCediRMlRrtYiLhsHhLJ11fSPDMcDLAn1CyNRqbUv2vm77rqf8\n" +
+                    "SpzrO1MV7+Myv7mmnLwleG3jROKaB8zUHPqLQaeIV9M3dQs/iaPsu5NQ63TRzDK8\n" +
+                    "Azh5HkbYBzmoDATt2QoQmenwcW0sBpaEgKsnUe5WozZJeizQ8d8igA==\n" +
+                    "-----END RSA PRIVATE KEY-----\n");
+        }
 
         if (false) {
 
@@ -88,9 +90,11 @@ public class ConnectActivity extends AppCompatActivity {
                     "-----END RSA PRIVATE KEY-----");
         }
 
-        r.setAccessCodeMap(new HashMap<String, String>() {{
-            put("sample-app", "a2dcb");
-        }});
+        if (false) {
+            r.setAccessCodeMap(new HashMap<String, String>() {{
+                put("sample-app", "a2dcb");
+            }});
+        }
 
         r.setHost(hostText.getText().toString(), Integer.valueOf(portText.getText().toString()));
         r.setUtcTime(true);

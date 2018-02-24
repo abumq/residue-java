@@ -941,7 +941,7 @@ public class Residue {
                             byte[] decoded = ResidueUtils.base64Decode(data);
                             String s2 = ResidueUtils.decryptRSA(decoded, getInstance().privateKey);
                             if (s2 != null) {
-                                int pos = s2.indexOf("{\"ack\""); // decryption issue on android
+                                int pos = s2.indexOf("{\""); // decryption issue on android
                                 if (pos == -1) {
                                     ResidueUtils.log("Pos == -1");
                                     return;
