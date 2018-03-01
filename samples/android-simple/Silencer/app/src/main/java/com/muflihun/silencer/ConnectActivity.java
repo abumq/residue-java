@@ -21,7 +21,7 @@ public class ConnectActivity extends AppCompatActivity {
         Residue r = Residue.getInstance();
         System.out.println("reconnect()...");
 
-        if (false) {
+        if (true) {
             // unencrypted private key
             r.setClientId("muflihun00102030");
             r.setPrivateKeyPEM("-----BEGIN RSA PRIVATE KEY-----\n" +
@@ -55,7 +55,7 @@ public class ConnectActivity extends AppCompatActivity {
 
         if (false) {
 
-            // unencrypted private key
+            // encrypted private key
             r.setClientId("muflihun00102031");
             r.setPrivateKeySecret("8583fFir");
             r.setPrivateKeyPEM("-----BEGIN RSA PRIVATE KEY-----\n" +
@@ -88,12 +88,6 @@ public class ConnectActivity extends AppCompatActivity {
                     "4jOx9U2cYhuE+qL8oeOcJQAY/YK4rXReadzjCb7PZgySrXn3dcrZNtSOjUpACG7g\n" +
                     "hR0CS7SeVo6EhIQhzFzAfiX2TGxZ1YksSCogAjx2aavWXF+AAzb/BamtXyQ+beJ/\n" +
                     "-----END RSA PRIVATE KEY-----");
-        }
-
-        if (false) {
-            r.setAccessCodeMap(new HashMap<String, String>() {{
-                put("sample-app", "a2dcb");
-            }});
         }
 
         r.setHost(hostText.getText().toString(), Integer.valueOf(portText.getText().toString()));

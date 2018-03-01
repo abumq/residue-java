@@ -1,5 +1,8 @@
 # Change Log
 
+## [2.0.0] - 01-03-2018
+- Compatibility for server 2.0.0
+
 ## [1.1.1] - 23-02-2018
 - Removed plain request
 
