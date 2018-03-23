@@ -5,3 +5,4 @@ cd bin/
 jar cvf Residue.jar cz* com* lib/lib*
 cd ..
 javac -d bin/ -cp bin/ app/ResidueJNIExample.java
+rm -rf bin/com bin/cz bin/lib
