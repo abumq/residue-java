@@ -1,1 +1,1 @@
-java -Djava.library.path=. ResidueJNIExample
+java -Djava.library.path=bin/ -cp bin ResidueJNIExample
