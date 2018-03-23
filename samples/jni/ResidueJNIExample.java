@@ -1,3 +1,5 @@
+import com.muflihun.residue.Residue;
+
 public class ResidueJNIExample {
    public static void main(String[] args) throws Exception {
        Residue logger = Residue.getInstance();
