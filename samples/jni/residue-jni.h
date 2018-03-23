@@ -8,19 +8,19 @@ extern "C" {
     /*
      * Method:    connect
      */
-    JNIEXPORT void JNICALL Java_Residue_connect(JNIEnv *, jobject, jstring);
+    JNIEXPORT void JNICALL Java_com_muflihun_residue_Residue_connect(JNIEnv *, jobject, jstring);
     
     /*
      * Method: disconnect
      */
-    JNIEXPORT void JNICALL Java_Residue_disconnect(JNIEnv *, jobject);
+    JNIEXPORT void JNICALL Java_com_muflihun_residue_Residue_disconnect(JNIEnv *, jobject);
     
     /**
      * Residue.info(String msg)
      *
      * Sends info log
      */
-    JNIEXPORT void JNICALL Java_Residue_info(JNIEnv *, jobject, jstring);
+    JNIEXPORT void JNICALL Java_com_muflihun_residue_Residue_info(JNIEnv *, jobject, jstring);
  
 #ifdef __cplusplus
 }
