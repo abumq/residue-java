@@ -1,3 +1,5 @@
+package com.muflihun.residue;
+
 import java.lang.Exception;
 
 public class Residue {
