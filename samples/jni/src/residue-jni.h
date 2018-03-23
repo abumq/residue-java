@@ -5,6 +5,8 @@
 extern "C" {
 #endif
     
+    JNIEXPORT jint JNI_OnLoad(JavaVM* vm, void*);
+
     /*
      * Method:    connect
      */

@@ -2,6 +2,12 @@
 #include "residue-jni.h"
 #include <residue/residue.h>
 
+JNIEXPORT jint JNI_OnLoad(JavaVM* vm, void*)
+{
+    std::cout << "Residue interface loaded" << std::endl;
+    return 0;
+}
+
 JNIEXPORT void JNICALL Java_com_muflihun_residue_Residue_connect(JNIEnv *env, jobject, jstring conf_) {
     const char* conf = env->GetStringUTFChars(conf_, NULL);
     
