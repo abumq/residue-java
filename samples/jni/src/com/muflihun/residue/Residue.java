@@ -1,8 +1,15 @@
+package com.muflihun.residue;
+
+import cz.adamh.NativeUtils;
 import java.lang.Exception;
 
 public class Residue {
    static {
-       System.loadLibrary("residue-jni");
+       try {
+           NativeUtils.loadLibraryFromJar("/lib/libresidue-jni.so");
+       } catch (Exception e) {
+           e.printStackTrace();
+       }
    }
     
     private static Residue instance = null;
