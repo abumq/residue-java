@@ -1,5 +1,8 @@
 # Change Log
 
+## [2.0.1] - 27-03-2018
+- Dispatch verbose logs always without check
+
 ## [2.0.0] - 01-03-2018
 - Compatibility for server 2.0.0
 

@@ -598,25 +598,19 @@ public class Residue {
         }
 
         public void verbose(Integer vlevel, String format, Object... args) {
-            if (isErrorEnabled()) {
-                String message = String.format(format, args);
+            String message = String.format(format, args);
 
-                log(message, LoggingLevels.VERBOSE, vlevel);
-            }
+            log(message, LoggingLevels.VERBOSE, vlevel);
         }
 
         public void verbose(Integer vlevel, Throwable t, String format, Object... args) {
-            if (isErrorEnabled()) {
-                String message = String.format(format, args);
+            String message = String.format(format, args);
 
-                verbose(vlevel, message, t);
-            }
+            verbose(vlevel, message, t);
         }
 
         public void verbose(Integer vlevel, String message, Throwable throwable) {
-            if (isErrorEnabled()) {
-                log(message, throwable, LoggingLevels.VERBOSE, vlevel);
-            }
+            log(message, throwable, LoggingLevels.VERBOSE, vlevel);
         }
 
         public void log(Object msg, Throwable t, LoggingLevels level) {
