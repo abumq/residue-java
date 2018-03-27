@@ -1,16 +1,23 @@
 import com.muflihun.residue.Residue;
+import com.muflihun.residue.Logger;
 
 public class ResidueJNIExample {
    public static void main(String[] args) throws Exception {
-       Residue logger = Residue.getInstance();
+       Residue r = Residue.getInstance();
        
-       logger.connect("app/conf.json");
+       r.connect("app/conf.json");
        
+       Logger logger = new Logger("sample-app");
+
        logger.info("message from JNI");
+       
+       Thread.currentThread().setName("ThreadSimple");
+
+       logger.info("message from JNI with thread ID");
        
        System.out.println("Disconnecting...");
        
        // wait (for flush) and disconnect
-       logger.disconnect();
+       r.disconnect();
    }
 }

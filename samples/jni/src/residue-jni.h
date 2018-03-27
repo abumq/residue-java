@@ -18,11 +18,11 @@ extern "C" {
     JNIEXPORT void JNICALL Java_com_muflihun_residue_Residue_disconnect(JNIEnv *, jobject);
     
     /**
-     * Residue.info(String msg)
+     * Residue.write(String loggerId, String file, int lineNumber, String func, String msg, int level, int vl, jstring threadId)
      *
-     * Sends info log
+     * Sends log
      */
-    JNIEXPORT void JNICALL Java_com_muflihun_residue_Residue_info(JNIEnv *, jobject, jstring);
+    JNIEXPORT void JNICALL Java_com_muflihun_residue_Residue_write(JNIEnv *, jobject, jstring, jstring, jint, jstring, jstring, jint, jint, jstring);
  
 #ifdef __cplusplus
 }
