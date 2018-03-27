@@ -25,20 +25,25 @@ JNIEXPORT void JNICALL Java_com_muflihun_residue_Residue_disconnect(JNIEnv *env,
     Residue::disconnect();
 }
 
-JNIEXPORT void JNICALL Java_com_muflihun_residue_Residue_infoWrapper(JNIEnv *env,
+JNIEXPORT void JNICALL Java_com_muflihun_residue_Residue_write(JNIEnv *env,
         jobject obj,
         jstring loggerId_,
         jstring file_,
         jint line_,
         jstring func_,
         jstring msg_,
-        jint vl_
+        jint level_,
+        jint vl_,
+        jstring threadId_
     ) {
     const char* loggerId = env->GetStringUTFChars(loggerId_, NULL);
     const char* file = env->GetStringUTFChars(file_, NULL);
     const char* func = env->GetStringUTFChars(func_, NULL);
     el::base::type::LineNumber line = static_cast<el::base::type::LineNumber>(line_);
     const char* msg = env->GetStringUTFChars(msg_, NULL);
+    const char* threadId = env->GetStringUTFChars(threadId_, NULL);
+    Residue::setThreadName(threadId);
+    el::Level level = static_cast<el::Level>(level_);
     el::base::type::VerboseLevel vl = static_cast<el::base::type::VerboseLevel>(vl_);
-    el::base::Writer(el::Level::Info, file, line, func, el::base::DispatchAction::NormalLog, vl).construct(1, loggerId) << msg;
+    el::base::Writer(level, file, line, func, el::base::DispatchAction::NormalLog, vl).construct(1, loggerId) << msg;
 }

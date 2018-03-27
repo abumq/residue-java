@@ -11,6 +11,10 @@ public class ResidueJNIExample {
 
        logger.info("message from JNI");
        
+       Thread.currentThread().setName("ThreadSimple");
+
+       logger.info("message from JNI with thread ID");
+       
        System.out.println("Disconnecting...");
        
        // wait (for flush) and disconnect

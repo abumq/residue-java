@@ -26,5 +26,5 @@ public class Residue {
     public native void connect(String confPath) throws Exception;
     public native void disconnect();
     
-    /* package */ native void infoWrapper(String loggerId, String file, Integer line, String func, String msg, Integer vl);
+    /* package */ synchronized native void write(String loggerId, String file, int line, String func, String msg, int level, int vl, String threadId);
 }

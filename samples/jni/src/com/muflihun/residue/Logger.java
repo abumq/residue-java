@@ -27,12 +27,12 @@ public class Logger {
         }
         return stackItem;
     }
-    
+
     public void info(String msg) {
         StackTraceElement si = getStackItem(3);
         int lineNumber = si == null ? 0 : si.getLineNumber();
         String filename = si == null ? "" : si.getFileName();
         String func = si == null ? "" : si.getMethodName();
-        Residue.getInstance().infoWrapper(id, filename, lineNumber, func, msg, 0); 
+        Residue.getInstance().write(id, filename, lineNumber, func, msg, 128 /* Info */, 0, Thread.currentThread().getName()); 
     }
 }
