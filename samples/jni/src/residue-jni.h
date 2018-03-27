@@ -1,3 +1,15 @@
+//
+// Part of residue native binding for java
+//
+// Copyright (C) 2017-present Muflihun Labs
+//
+// https://muflihun.com
+// https://muflihun.github.io/residue
+// https://github.com/muflihun/residue-java
+//
+// Author: @abumusamq
+//
+
 #include <jni.h>
 #ifndef Residue_JNI_H
 #define Residue_JNI_H
