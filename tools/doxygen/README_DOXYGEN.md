@@ -1,7 +1,7 @@
                                        ‫بسم الله الرَّحْمَنِ الرَّحِيمِ
 
-![banner]
-    
+Residue Java Client Library
+
 # Introduction
 Java library to interact with residue seamlessly.
 
@@ -11,7 +11,7 @@ Following licence applies strictly to this library.
 ```
 MIT License
 
-Copyright (c) 2017 Muflihun Labs
+Copyright (c) 2017 Zuhd Web Services
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -31,5 +31,3 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
-
-  [banner]: https://raw.githubusercontent.com/muflihun/residue-java/master/tools/ResidueJ.png

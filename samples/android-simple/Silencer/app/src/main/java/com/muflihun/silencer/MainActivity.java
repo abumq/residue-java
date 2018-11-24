@@ -12,7 +12,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.RadioButton;
 
-import com.muflihun.residue.Residue;
+import org.zuhd.residue.Residue;
 
 
 public class MainActivity extends AppCompatActivity {

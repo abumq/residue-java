@@ -1,5 +1,5 @@
-import com.muflihun.residue.Residue;
-import com.muflihun.residue.Logger;
+import org.zuhd.residue.Residue;
+import org.zuhd.residue.Logger;
 
 // Base code from https://docs.oracle.com/javase/tutorial/essential/concurrency/simple.html
 

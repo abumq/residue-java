@@ -1,6 +1,6 @@
 package com.muflihun.silencer;
 
-import com.muflihun.residue.Residue;
+import org.zuhd.residue.Residue;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

@@ -1,5 +1,5 @@
-import com.muflihun.residue.Residue;
-import com.muflihun.residue.Logger;
+import org.zuhd.residue.Residue;
+import org.zuhd.residue.Logger;
 
 public class ResidueJNIExample {
    public static void main(String[] args) throws Exception {

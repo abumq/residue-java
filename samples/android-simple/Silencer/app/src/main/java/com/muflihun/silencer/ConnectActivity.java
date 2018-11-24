@@ -8,8 +8,8 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 
-import com.muflihun.residue.Residue;
-import com.muflihun.residue.ResidueConnectTask;
+import org.zuhd.residue.Residue;
+import org.zuhd.residue.ResidueConnectTask;
 
 import java.util.HashMap;
 
