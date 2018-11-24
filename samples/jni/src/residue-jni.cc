@@ -1,13 +1,14 @@
 //
 // Part of residue native binding for java
 //
-// Copyright (C) 2017-present Muflihun Labs
+// Copyright (C) 2017-present Zuhd Web Services
 //
 // https://muflihun.com
-// https://muflihun.github.io/residue
-// https://github.com/muflihun/residue-java
+// https://zuhd.org
+// https://github.com/zuhd-org/residue-java
 //
 // Author: @abumusamq
+//
 
 #include "residue-jni.h"
 #include <residue/residue.h>
@@ -20,7 +21,7 @@ JNIEXPORT jint JNI_OnLoad(JavaVM* vm, void*)
 
 JNIEXPORT void JNICALL Java_com_muflihun_residue_Residue_connect(JNIEnv *env, jobject, jstring conf_) {
     const char* conf = env->GetStringUTFChars(conf_, NULL);
-    
+
     try {
         Residue::loadConfiguration(conf);
         Residue::reconnect();

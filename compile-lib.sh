@@ -1,2 +1,2 @@
-javac -cp "./lib/*" -d bin/ src/com/muflihun/residue/Residue.java src/com/muflihun/residue/thirdparty/android/util/Base64.java
+javac -cp "./lib/*" -d bin/ src/org/zuhd/residue/Residue.java src/org/zuhd/residue/Base64.java
 jar cvf bin/Residue.jar bin/com*

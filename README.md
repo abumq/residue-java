@@ -2,16 +2,19 @@
 
 # Residue Java Client
 
-[![Version](https://img.shields.io/github/release/muflihun/residue-java.svg)](https://github.com/muflihun/residue-java/releases/latest) [![GitHub license](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/muflihun/residue-java/blob/master/LICENCE) [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.me/MuflihunDotCom/25)
+[![Version](https://img.shields.io/github/release/zuhd-org/residue-java.svg)](https://github.com/zuhd-org/residue-java/releases/latest) [![GitHub license](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/zuhd-org/residue-java/blob/master/LICENCE)
+
+[![Donate](https://muflihun.github.io/donate.png?v2)](https://www.paypal.me/zuhd/25)
+
 
 ## Introduction
 This library provides you interface to connect to the residue seamlessly and use it as your central logging library.
 
 Please note, until first stable release we are not providing JAR file for this library. Please feel free to import the relevant code in to your library.
 
-For regular java project you will need [Residue.java](/src/com/muflihun/residue) and [Base64.java](/src/com/muflihun/residue/Base64.java)
+For regular java project you will need [Residue.java](/src/com/zuhd-org/residue) and [Base64.java](/src/org/zuhd/residue/Base64.java)
 
-For android project you will also need [ResidueConnectTask.java](/src/com/muflihun/residue/ResidueConnectTask.java)
+For android project you will also need [ResidueConnectTask.java](/src/org/zuhd/residue/ResidueConnectTask.java)
 
 ## Dependencies
 
@@ -23,15 +26,15 @@ For android project you will also need [ResidueConnectTask.java](/src/com/muflih
 
 ```
 mkdir lib
-wget https://raw.githubusercontent.com/muflihun/muflihun.github.io/master/downloads/bcprov-jdk15on-156.jar -O lib/bcprov-jdk15on-156.jar ## BouncyCastle
-wget https://raw.githubusercontent.com/muflihun/muflihun.github.io/master/downloads/gson-2.6.2.jar -O lib/gson-2.6.2.jar ## GSON
+wget https://muflihun.github.io/downloads/bcprov-jdk15on-156.jar -O lib/bcprov-jdk15on-156.jar ## BouncyCastle
+wget https://muflihun.github.io/downloads/gson-2.6.2.jar -O lib/gson-2.6.2.jar ## GSON
 ```
 
 ### Higher security
 
 You may be interested in Unlimited Strength Jurisdiction Policy Files for higher security and ability to use AES-256 cryptography. Please make sure you read the policy statement.
 
-You can [download it from here](https://raw.githubusercontent.com/muflihun/muflihun.github.io/master/downloads/UnlimitedJCEPolicyJDK7.zip) and make sure you unzip these files to `<java-home>/jre/lib/security` (please make backups as required).
+You can [download it from here](https://muflihun.github.io/downloads/UnlimitedJCEPolicyJDK7.zip) and make sure you unzip these files to `<java-home>/jre/lib/security` (please make backups as required).
 
 #### Official Links
 
@@ -86,11 +89,12 @@ Check out [simple sample](/simple-sample) or [Android sample](/samples/android-s
 
 ## License
 ```
-Copyright 2017-present Muflihun Labs
+Copyright 2017-present Zuhd Web Services
 Copyright 2017-present @abumusamq
 
-https://github.com/muflihun/
+https://github.com/zuhd-org/
 https://muflihun.com
+https://zuhd.org
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -104,5 +108,3 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 ```
-
-  [banner]: https://raw.githubusercontent.com/muflihun/residue-java/master/tools/ResidueJ.png

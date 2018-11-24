@@ -24,7 +24,7 @@
  * limitations under the License.
  */
 
-package com.muflihun.residue;
+package org.zuhd.residue;
 
 import javax.crypto.Cipher;
 import javax.crypto.EncryptedPrivateKeyInfo;

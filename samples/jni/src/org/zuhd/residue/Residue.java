@@ -3,11 +3,11 @@
  *
  * Official Java client library for Residue logging server
  *
- * Copyright (C) 2017-present Muflihun Labs
+ * Copyright (C) 2017-present Zuhd Web Services
  *
  * https://muflihun.com
- * https://muflihun.github.io/residue
- * https://github.com/muflihun/residue-java
+ * https://zuhd.org
+ * https://github.com/zuhd-org/residue-java
  *
  * Author: @abumusamq
  *
@@ -24,7 +24,7 @@
  * limitations under the License.
  */
 
-package com.muflihun.residue;
+package org.zuhd.residue;
 
 import cz.adamh.NativeUtils;
 import java.lang.Exception;
@@ -41,39 +41,39 @@ public class Residue {
             e.printStackTrace();
         }
     }
-    
+
     private static Residue instance = null;
     private Logger defaultLogger = new Logger("default");
     private PrintStream printStream = new ResiduePrintStream(System.out);
-    
+
     private Residue() {
     }
-    
+
     public static Residue getInstance() {
         if (instance == null) {
             instance = new Residue();
         }
         return instance;
     }
-    
+
     public void setDefaultLogger(Logger logger) {
         this.defaultLogger = logger;
     }
-    
+
     public Logger getDefaultLogger() {
         return this.defaultLogger;
     }
-    
+
     public PrintStream getPrintStream() {
         return printStream;
     }
-    
+
     public void setPrintStream(PrintStream printStream) {
         this.printStream = printStream;
     }
-    
+
     public native void connect(String confPath) throws Exception;
     public native void disconnect();
-    
+
     /* package */ synchronized native void write(String loggerId, String file, int line, String func, String msg, int level, int vl, String threadId);
 }

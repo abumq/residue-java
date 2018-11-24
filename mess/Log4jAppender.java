@@ -1,4 +1,4 @@
-package com.muflihun.residue;
+package org.zuhd.residue;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.core.Filter;

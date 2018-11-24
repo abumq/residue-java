@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.muflihun.residue;
+package org.zuhd.residue;
 
 import java.io.UnsupportedEncodingException;
 

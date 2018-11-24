@@ -1,4 +1,4 @@
-package com.muflihun.residue;
+package org.zuhd.residue;
 
 import java.util.HashMap;
 

@@ -3,11 +3,11 @@
  *
  * Official Java client library for Residue logging server
  *
- * Copyright (C) 2017-present Muflihun Labs
+ * Copyright (C) 2017-present Zuhd Web Services
  *
  * https://muflihun.com
- * https://muflihun.github.io/residue
- * https://github.com/muflihun/residue-java
+ * https://zuhd.org
+ * https://github.com/zuhd-org/residue-java
  *
  * Author: @abumusamq
  *
@@ -24,7 +24,7 @@
  * limitations under the License.
  */
 
-package com.muflihun.residue;
+package org.zuhd.residue;
 
 import javax.crypto.Cipher;
 import javax.crypto.EncryptedPrivateKeyInfo;
