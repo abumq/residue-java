@@ -1,5 +1,5 @@
-import org.zuhd.residue.Residue;
-import org.zuhd.residue.Logger;
+import com.amrayn.residue.Residue;
+import com.amrayn.residue.Logger;
 
 public class ResidueJNIExample {
    public static void main(String[] args) throws Exception {

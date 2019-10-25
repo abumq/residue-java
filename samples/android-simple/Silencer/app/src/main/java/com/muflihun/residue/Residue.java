@@ -3,11 +3,11 @@
  *
  * Official Java client library for Residue logging server
  *
- * Copyright (C) 2017-present Muflihun Labs
+ * Copyright (C) 2017-present Amrayn Web Services
  *
  * https://muflihun.com
- * https://muflihun.github.io/residue
- * https://github.com/muflihun/residue-java
+ * https://amrayn.github.io/residue
+ * https://github.com/amrayn/residue-java
  *
  * Author: @abumusamq
  *
@@ -24,7 +24,7 @@
  * limitations under the License.
  */
 
-package org.zuhd.residue;
+package com.amrayn.residue;
 
 import javax.crypto.Cipher;
 import javax.crypto.EncryptedPrivateKeyInfo;
@@ -98,7 +98,7 @@ import org.bouncycastle.asn1.pkcs.PKCSObjectIdentifiers;
  * For the functions that do not have documentation, please refer to C++ library's documentation,
  * all the concepts and naming conventions are same for all the official residue client libraries
  *
- * @see <a href='https://muflihun.github.io/residue/'>C++ API Documentation </a>
+ * @see <a href='https://amrayn.github.io/residue/'>C++ API Documentation </a>
  */
 public class Residue {
 
@@ -368,7 +368,7 @@ public class Residue {
     /**
      * Sets number of log messages to be bulked together
      * This depends on what server accepts. The configuration value on the server is
-     * <a href='https://github.com/muflihun/residue/blob/master/docs/CONFIGURATION.md#max_items_in_bulk'>max_items_in_bulk</a>.
+     * <a href='https://github.com/amrayn/residue/blob/master/docs/CONFIGURATION.md#max_items_in_bulk'>max_items_in_bulk</a>.
      *
      * @param bulkSize
      * @throws IllegalArgumentException If already connected and you try to set size more than

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.zuhd.residue;
+package com.amrayn.residue;
 
 import java.io.UnsupportedEncodingException;
 

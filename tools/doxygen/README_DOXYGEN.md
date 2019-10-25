@@ -11,7 +11,7 @@ Following licence applies strictly to this library.
 ```
 MIT License
 
-Copyright (c) 2017 Zuhd Web Services
+Copyright (c) 2017 Amrayn Web Services
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

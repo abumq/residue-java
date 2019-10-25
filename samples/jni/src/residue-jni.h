@@ -1,11 +1,11 @@
 //
 // Part of residue native binding for java
 //
-// Copyright (C) 2017-present Zuhd Web Services
+// Copyright (C) 2017-present Amrayn Web Services
 //
 // https://muflihun.com
-// https://zuhd.org
-// https://github.com/zuhd-org/residue-java
+// https://amrayn.com
+// https://github.com/amrayn/residue-java
 //
 // Author: @abumusamq
 //

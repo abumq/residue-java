@@ -1,4 +1,4 @@
-package org.zuhd.residue;
+package com.amrayn.residue;
 
 import java.util.HashMap;
 import java.util.logging.Handler;

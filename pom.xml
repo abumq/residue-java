@@ -6,25 +6,25 @@
 
 <project>
   <modelVersion>4.0.0</modelVersion>
-  <groupId>org.zuhd</groupId>
+  <groupId>com.amrayn</groupId>
   <artifactId>residue</artifactId>
   <version>1.0.0-beta.2</version>
   <packaging>jar</packaging>
 
   <name>Residue</name>
   <description>Java library to interact with residue seamlessly.</description>
-  <url>https://muflihun.github.io/residue</url>
+  <url>https://amrayn.github.io/residue</url>
 
   <licenses>
     <license>
       <name>Apache License, Version 2.0</name>
-      <url>https://github.com/zuhd-org/residue-java/blob/master/LICENCE</url>
+      <url>https://github.com/amrayn/residue-java/blob/master/LICENCE</url>
       <distribution>repo</distribution>
     </license>
   </licenses>
 
   <scm>
-    <url>https://github.com/zuhd-org/residue-java/</url>
+    <url>https://github.com/amrayn/residue-java/</url>
   </scm>
 
   <dependencies>
