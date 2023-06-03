@@ -3,13 +3,7 @@
  *
  * Official Java client library for Residue logging server
  *
- * Copyright (C) 2017-present Amrayn Web Services
- *
- * https://muflihun.com
- * https://amrayn.github.io/residue
- * https://github.com/amrayn/residue-java
- *
- * Author: @abumusamq
+ * Copyright (C) 2017-present @abumq (Majid Q.)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -368,7 +362,7 @@ public class Residue {
     /**
      * Sets number of log messages to be bulked together
      * This depends on what server accepts. The configuration value on the server is
-     * <a href='https://github.com/amrayn/residue/blob/master/docs/CONFIGURATION.md#max_items_in_bulk'>max_items_in_bulk</a>.
+     * <a href='https://github.com/abumq/residue/blob/master/docs/CONFIGURATION.md#max_items_in_bulk'>max_items_in_bulk</a>.
      *
      * @param bulkSize
      * @throws IllegalArgumentException If already connected and you try to set size more than

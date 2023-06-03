@@ -13,18 +13,18 @@
 
   <name>Residue</name>
   <description>Java library to interact with residue seamlessly.</description>
-  <url>https://amrayn.github.io/residue</url>
+  <url>https://github.com/abumq/residue</url>
 
   <licenses>
     <license>
       <name>Apache License, Version 2.0</name>
-      <url>https://github.com/amrayn/residue-java/blob/master/LICENCE</url>
+      <url>https://github.com/abumq/residue-java/blob/master/LICENCE</url>
       <distribution>repo</distribution>
     </license>
   </licenses>
 
   <scm>
-    <url>https://github.com/amrayn/residue-java/</url>
+    <url>https://github.com/abumq/residue-java/</url>
   </scm>
 
   <dependencies>
