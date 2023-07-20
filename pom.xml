@@ -6,7 +6,7 @@
 
 <project>
   <modelVersion>4.0.0</modelVersion>
-  <groupId>com.amrayn</groupId>
+  <groupId>com.abumq</groupId>
   <artifactId>residue</artifactId>
   <version>1.0.0-beta.2</version>
   <packaging>jar</packaging>

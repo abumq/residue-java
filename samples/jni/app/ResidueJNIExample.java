@@ -1,5 +1,5 @@
-import com.amrayn.residue.Residue;
-import com.amrayn.residue.Logger;
+import com.abumq.residue.Residue;
+import com.abumq.residue.Logger;
 
 public class ResidueJNIExample {
    public static void main(String[] args) throws Exception {

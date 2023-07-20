@@ -1,13 +1,8 @@
 //
 // Part of residue native binding for java
 //
-// Copyright (C) 2017-present Amrayn Web Services
-//
-// https://muflihun.com
-// https://amrayn.com
-// https://github.com/amrayn/residue-java
-//
-// Author: @abumusamq
+// Copyright (C) 2017-present @abumq (Majid Q.)
+// https://github.com/abumq
 //
 
 #include <jni.h>

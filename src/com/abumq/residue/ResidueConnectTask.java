@@ -18,7 +18,7 @@
  * limitations under the License.
  */
 
-package com.amrayn.residue;
+package com.abumq.residue;
 
 import android.os.AsyncTask;
 

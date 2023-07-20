@@ -1,4 +1,4 @@
-package com.amrayn.residue;
+package com.abumq.residue;
 
 import java.util.HashMap;
 import java.util.logging.Handler;

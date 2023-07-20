@@ -1,4 +1,4 @@
 PROJECT_NAME=ResidueJ
 PROJECT_BRIEF="Java library to interact with residue seamlessly."
 OUTPUT_DIRECTORY=bin/doc
-INPUT=tools/doxygen/README_DOXYGEN.md src/com/amrayn/residue.java
+INPUT=tools/doxygen/README_DOXYGEN.md src/com/abumq/residue.java

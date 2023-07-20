@@ -8,8 +8,8 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 
-import com.amrayn.residue.Residue;
-import com.amrayn.residue.ResidueConnectTask;
+import com.abumq.residue.Residue;
+import com.abumq.residue.ResidueConnectTask;
 
 import java.util.HashMap;
 

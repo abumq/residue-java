@@ -1,5 +1,5 @@
-import com.amrayn.residue.Residue;
-import com.amrayn.residue.Logger;
+import com.abumq.residue.Residue;
+import com.abumq.residue.Logger;
 
 // Base code from https://docs.oracle.com/javase/tutorial/essential/concurrency/simple.html
 

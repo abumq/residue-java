@@ -18,7 +18,7 @@
  * limitations under the License.
  */
 
-package com.amrayn.residue;
+package com.abumq.residue;
 
 import javax.crypto.Cipher;
 import javax.crypto.EncryptedPrivateKeyInfo;
@@ -92,7 +92,7 @@ import org.bouncycastle.asn1.pkcs.PKCSObjectIdentifiers;
  * For the functions that do not have documentation, please refer to C++ library's documentation,
  * all the concepts and naming conventions are same for all the official residue client libraries
  *
- * @see <a href='https://amrayn.github.io/residue/'>C++ API Documentation </a>
+ * @see <a href='https://abumq.github.io/residue/'>C++ API Documentation </a>
  */
 public class Residue {
 

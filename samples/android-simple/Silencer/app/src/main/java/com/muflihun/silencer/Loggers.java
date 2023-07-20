@@ -1,6 +1,6 @@
 package com.muflihun.silencer;
 
-import com.amrayn.residue.Residue;
+import com.abumq.residue.Residue;
 
 public class Loggers {
 
